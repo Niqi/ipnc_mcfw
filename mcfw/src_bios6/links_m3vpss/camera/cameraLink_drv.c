@@ -216,6 +216,9 @@ Int32 CameraLink_drvCreateSensor(CameraLink_Obj * pObj, UInt16 instId)
     #ifdef IMGS_SONY_IMX140
     if ((pInstPrm->videoDecoderId == FVID2_ISS_SENSOR_IMX140_DRV) && (pInstPrm->vipInstId == ISS_CAPT_INST_VP || pInstPrm->vipInstId == ISS_CAPT_INST_VP))
     #endif
+	#ifdef IMGS_SONY_IMX291
+    if ((pInstPrm->videoDecoderId == FVID2_ISS_SENSOR_IMX291_DRV) && (pInstPrm->vipInstId == ISS_CAPT_INST_VP || pInstPrm->vipInstId == ISS_CAPT_INST_VP))
+    #endif
     {
         status = Iss_platformSelectSensor(pInstPrm->videoDecoderId, pInstPrm->vipInstId);
     }
@@ -338,7 +341,7 @@ Int32 CameraLink_drvSetMirrorMode(CameraLink_Obj * pObj, Int32 mirrorMode)
 
     /*
      * set mirror mode using a IOCTL
-     */		
+     */
 
     status =
         FVID2_control(pInst->cameraVipHandle, IOCTL_ISS_CAPT_SET_MIRROR_MODE,
@@ -537,7 +540,7 @@ Int32 CameraLink_drvCreateInst(CameraLink_Obj * pObj, UInt16 instId)
 		/*
 		 *	When VNF is ON then padding of 32 pixels and 32 lines is required.
 		 *  So the pitch is increased by 64.
-         */		
+         */
         if ((outId == 0) && (pVipOutPrm->dataFormat != FVID2_DF_BAYER_RAW))
             pVipOutPrm->pitch[0] += 64;
 
@@ -657,7 +660,7 @@ Int32 CameraLink_drvCreateInst(CameraLink_Obj * pObj, UInt16 instId)
         else if (pInstPrm->outParams[1].standard == SYSTEM_STD_PAL)
                  CameraLink_drvInstSetFrameSkip(pObj, instId, 1,
                                                 CAMERA_LINK_FRAMESKIPMASK_FIVE_TWELFTH, CAMERA_LINK_FRAMESKIPMASK_FIVE_TWELFTH_HIGH);/* 60=>25 */
-		     else 										
+		     else
 			     CameraLink_drvInstSetFrameSkip(pObj, instId, 1, 0, 0); /* 60 => 60 */
     }
 #if 0
@@ -747,7 +750,7 @@ Int32 CameraLink_drvCreateInst(CameraLink_Obj * pObj, UInt16 instId)
                 NULL);
     UTILS_assert(FVID2_SOK == status);
 	}
-	
+
     /* Set ISIF Parameters */
     status = FVID2_control(
                 pInst->cameraVipHandle,
@@ -875,7 +878,7 @@ Int32 CameraLink_drvCreateInst(CameraLink_Obj * pObj, UInt16 instId)
     {
 		isifCfg.horzOffset = pInst->createArgs.inFmt.width * 2;
     }
-	
+
 	if(pObj->createArgs.captureMode == CAMERA_LINK_CAPMODE_DDR)
         	isifCfg.horzOffset = pInst->createArgs.outStreamInfo[0].pitch[0];
 
@@ -1282,7 +1285,7 @@ Int32 CameraLink_drvProcessData(CameraLink_Obj * pObj)
                         pFrameInfo->rtChInfo.height += 32;
                         pFrameInfo->rtChInfo.width += 32;
                     }
-					
+
 					if (pObj->createArgs.tilerEnable)
 					{
 						pFrameInfo->rtChInfo.pitch[0] = VPSUTILS_TILER_CNT_8BIT_PITCH;
@@ -1479,7 +1482,7 @@ Int32 CameraLink_drvStart(CameraLink_Obj * pObj)
         /* video decoder */
         if (pInstObj->SensorHandle)
             FVID2_start(pInstObj->SensorHandle, NULL);
-		
+
 #ifdef WDR_ON
 		if (pInstObj->SensorHandle)
 		{
@@ -1660,8 +1663,8 @@ Int32 CameraLink_drvDelete(CameraLink_Obj * pObj)
 		/* FIXME:If below debug message is removed then teardown doesn't go through */
 #ifdef SYSTEM_DEBUG_CAMERA
 		Vps_printf(" %d: CAMERA: Driver deleted !!!\n", Clock_getTicks());
-#endif		
-		
+#endif
+
         if (pInstObj->SensorHandle)
         {
             /* delete sensor handle */
@@ -1816,7 +1819,7 @@ Int32 CameraLink_drvAllocAndQueueFrames(CameraLink_Obj * pObj,
             if (streamId == 0)
             {
                 //Boxcar operation works on 12-bit Bayer data and outputs 16-bit data
-                //The output data is 48-bit RGB data for each 8 × 8 or 16 × 16 block.
+                //The output data is 48-bit RGB data for each 8 ?8 or 16 ?16 block.
                 if(gGLBCEnable == 1)
                 {
 					BoxCarDataSize = (format.height*format.width/256*2*4  + 2*1024) & 0xffff1000;//64*1024;
@@ -1826,7 +1829,7 @@ Int32 CameraLink_drvAllocAndQueueFrames(CameraLink_Obj * pObj,
 
 				/*
 				 *	VNF needs 32 pixels and 32 lines padding in input.
-				 */	
+				 */
 				format.width += 32;
 				format.height += 32;
             }
@@ -1838,26 +1841,26 @@ Int32 CameraLink_drvAllocAndQueueFrames(CameraLink_Obj * pObj,
 
             format.pitch[0] = pOutInfo->pitch[0];
 
-			if((pOutInfo->dataFormat == FVID2_DF_YUV422I_UYVY) || 
-			   (pOutInfo->dataFormat == FVID2_DF_YUV422I_YUYV) ||		
-		       (pOutInfo->dataFormat == FVID2_DF_YUV422I_YVYU) ||		
+			if((pOutInfo->dataFormat == FVID2_DF_YUV422I_UYVY) ||
+			   (pOutInfo->dataFormat == FVID2_DF_YUV422I_YUYV) ||
+		       (pOutInfo->dataFormat == FVID2_DF_YUV422I_YVYU) ||
 			   (pOutInfo->dataFormat == FVID2_DF_YUV422I_VYUY))
 			{
 				format.pitch[0] /= 2;
-			}	
-			
-            format.pitch[1] = format.pitch[0];             
+			}
+
+            format.pitch[1] = format.pitch[0];
             format.pitch[2] = format.pitch[1];
             format.fieldMerged[0] = FALSE;
             format.fieldMerged[1] = FALSE;
             format.fieldMerged[2] = FALSE;
-			
+
 			/*
-			 *	When NF mode is changed between NSF and VNF dynamically 
-			 *  then capture format is changed to YUV422ILE and YUV420SP respectively. 	 
-			 *  We need to allocate memory big enough for both formats. 
-			 */			
-            format.dataFormat = (FVID2_DF_YUV422I_UYVY | FVID2_DF_YUV420SP_UV);	
+			 *	When NF mode is changed between NSF and VNF dynamically
+			 *  then capture format is changed to YUV422ILE and YUV420SP respectively.
+			 *  We need to allocate memory big enough for both formats.
+			 */
+            format.dataFormat = (FVID2_DF_YUV422I_UYVY | FVID2_DF_YUV420SP_UV);
             format.scanFormat = FVID2_SF_PROGRESSIVE;
             format.bpp = FVID2_BPP_BITS8;                  /* ignored */
 
@@ -1865,7 +1868,7 @@ Int32 CameraLink_drvAllocAndQueueFrames(CameraLink_Obj * pObj,
             {
                 format.height = CAMERA_LINK_RAW_VBI_LINES;
             }
-			
+
             /*
              * alloc memory based on 'format'
              * Allocated frame info is put in frames[]
@@ -2053,7 +2056,7 @@ Int32 CameraLink_drvFreeFrames(CameraLink_Obj * pObj,
             {
                 if(gGLBCEnable == 1)
 					BoxCarDataSize = (format.height*format.width/256*2*4  + 2*1024) & 0xffff1000;//64*1024;
-					
+
                 Blanking_Data_Size = BLANKING_DATA_SIZE + CAMERA_LINK_FD_RESULT_SIZE;
 
 				format.width += 32;
@@ -2067,20 +2070,20 @@ Int32 CameraLink_drvFreeFrames(CameraLink_Obj * pObj,
 
             format.pitch[0] = pOutInfo->pitch[0];
 
-			if((pOutInfo->dataFormat == FVID2_DF_YUV422I_UYVY) || 
-			   (pOutInfo->dataFormat == FVID2_DF_YUV422I_YUYV) ||		
-		       (pOutInfo->dataFormat == FVID2_DF_YUV422I_YVYU) ||		
+			if((pOutInfo->dataFormat == FVID2_DF_YUV422I_UYVY) ||
+			   (pOutInfo->dataFormat == FVID2_DF_YUV422I_YUYV) ||
+		       (pOutInfo->dataFormat == FVID2_DF_YUV422I_YVYU) ||
 			   (pOutInfo->dataFormat == FVID2_DF_YUV422I_VYUY))
 			{
 				format.pitch[0] /= 2;
-			}			
-			
+			}
+
             format.pitch[1] = format.pitch[0];
             format.pitch[2] = 0;
             format.fieldMerged[0] = FALSE;
             format.fieldMerged[1] = FALSE;
             format.fieldMerged[2] = FALSE;
-            format.dataFormat = (FVID2_DF_YUV422I_UYVY | FVID2_DF_YUV420SP_UV);	
+            format.dataFormat = (FVID2_DF_YUV422I_UYVY | FVID2_DF_YUV420SP_UV);
             format.scanFormat = FVID2_SF_PROGRESSIVE;
             format.bpp = FVID2_BPP_BITS8;                  /* ignored */
 
@@ -2235,11 +2238,11 @@ Int32 CameraLink_drvInitCreateArgs(Iss_CaptCreateParams * createArgs,
 
 		/*
 		 *	To support padding for VNF
-		 */	
+		 */
 		if(StreamId == 0)
 		{
 			createArgs->pitch[StreamId] += 64;
-		}			
+		}
     }
 #ifdef IMGS_OMNIVISION_OV7740
     pInstPrm->outParams[StreamId].outWidth = 720;
@@ -2995,7 +2998,7 @@ Int32 CameraLink_drvSetFramerate(CameraLink_Obj * pObj, UInt16 StreamId,
 							 CAMERA_LINK_FRAMESKIPMASK_FIVE_TWELFTH, CAMERA_LINK_FRAMESKIPMASK_FIVE_TWELFTH_HIGH);/* 60=>25 */
 					 else
 					     CameraLink_drvInstSetFrameSkip(pObj, 0, 1,
-                             CAMERA_LINK_FRAMESKIPMASK_FULL, CAMERA_LINK_FRAMESKIPMASK_FULL);	/* 60=>60 */						
+                             CAMERA_LINK_FRAMESKIPMASK_FULL, CAMERA_LINK_FRAMESKIPMASK_FULL);	/* 60=>60 */
             }
             else if (gFramerate_secondaryStream == 15)
             {
@@ -3025,9 +3028,9 @@ Int32 CameraLink_drvSetFramerate(CameraLink_Obj * pObj, UInt16 StreamId,
                 else if (pInstPrm->outParams[1].standard == SYSTEM_STD_PAL)
                          CameraLink_drvInstSetFrameSkip(pObj, 0, 1,
                              CAMERA_LINK_FRAMESKIPMASK_FIVE_SIXTH, CAMERA_LINK_FRAMESKIPMASK_FIVE_SIXTH);/* 30=>25 */
-					 else		 
+					 else
 					     CameraLink_drvInstSetFrameSkip(pObj, 0, 1,
-                             CAMERA_LINK_FRAMESKIPMASK_FULL, CAMERA_LINK_FRAMESKIPMASK_FULL);			 /* 30 => 30 */		 
+                             CAMERA_LINK_FRAMESKIPMASK_FULL, CAMERA_LINK_FRAMESKIPMASK_FULL);			 /* 30 => 30 */
             }
             else if (gFramerate_secondaryStream == 15)
             {
@@ -3069,7 +3072,7 @@ Int32 CameraLink_drvSetFramerate(CameraLink_Obj * pObj, UInt16 StreamId,
                              CAMERA_LINK_FRAMESKIPMASK_FIVE_TWELFTH, CAMERA_LINK_FRAMESKIPMASK_FIVE_TWELFTH_HIGH);/* 60=>25 */
 					 else
 					     CameraLink_drvInstSetFrameSkip(pObj, 0, 1,
-                             CAMERA_LINK_FRAMESKIPMASK_FULL, CAMERA_LINK_FRAMESKIPMASK_FULL);	/* 60=>60 */					 
+                             CAMERA_LINK_FRAMESKIPMASK_FULL, CAMERA_LINK_FRAMESKIPMASK_FULL);	/* 60=>60 */
             }
             else if (gSensorFramerate == 30)
             {
@@ -3081,7 +3084,7 @@ Int32 CameraLink_drvSetFramerate(CameraLink_Obj * pObj, UInt16 StreamId,
                              CAMERA_LINK_FRAMESKIPMASK_FIVE_SIXTH, CAMERA_LINK_FRAMESKIPMASK_FIVE_SIXTH);/* 30=>25 */
 					 else
 					     CameraLink_drvInstSetFrameSkip(pObj, 0, 1,
-                             CAMERA_LINK_FRAMESKIPMASK_FULL, CAMERA_LINK_FRAMESKIPMASK_FULL);			 /* 30 => 30 */					 
+                             CAMERA_LINK_FRAMESKIPMASK_FULL, CAMERA_LINK_FRAMESKIPMASK_FULL);			 /* 30 => 30 */
             }
         }
         else if (framerateParams.FrameRate == 15)
@@ -3150,9 +3153,9 @@ Int32 CameraLink_drvSetResolution(CameraLink_Obj * pObj, UInt16 instId,
     CameraLink_InstObj *pInst;
 
     Iss_CaptCreateParams *pVipCreateArgs;
-	
+
 	CameraLink_OutParams *pOutPrm;
-	
+
 	CameraLink_VipInstParams *pInstPrm;
 
     pInst = &pObj->instObj[instId];
@@ -3194,17 +3197,17 @@ Int32 CameraLink_drvSetResolution(CameraLink_Obj * pObj, UInt16 instId,
 			resolutionParams.ResolutionPitch[0] = Width;
 		}
 		resolutionParams.ResolutionPitch[1] = resolutionParams.ResolutionPitch[0];
-		
+
         if ((StreamId == 0) && (gCameraLink_obj.createArgs.vnfFullResolution))
         {
 			resolutionParams.ResolutionPitch[0] += 64;
-			resolutionParams.ResolutionPitch[1] += 64;      	
+			resolutionParams.ResolutionPitch[1] += 64;
         }
 	}
 
 	pInstPrm = &pObj->createArgs.vipInst[instId];
 	pOutPrm  = &pInstPrm->outParams[StreamId];
-	
+
 	if ((pOutPrm->dataFormat == FVID2_DF_YUV422I_UYVY) ||
         (pOutPrm->dataFormat == FVID2_DF_YUV422I_YUYV) ||
         (pOutPrm->dataFormat == FVID2_DF_YUV422I_YVYU) ||
@@ -3212,8 +3215,8 @@ Int32 CameraLink_drvSetResolution(CameraLink_Obj * pObj, UInt16 instId,
 	{
 		resolutionParams.ResolutionPitch[0] *= 2;
 		resolutionParams.ResolutionPitch[1] *= 2;
-	}	
-	
+	}
+
     status = FVID2_control(pInst->cameraVipHandle,
                            IOCTL_ISS_CAPT_SET_RESOLUTION,
                            &resolutionParams, NULL);
@@ -3431,64 +3434,64 @@ Int32 CameraLink_setOutputDataFormat(CameraLink_Obj *pObj,UInt16 instId,CameraLi
 
 	outDataFmt.streamId = pPrm->streamId;
 	outDataFmt.dataFmt  = (FVID2_DataFormat)pPrm->dataFmt;
-	
+
 	pInst = &pObj->instObj[instId];
 	pVipCreateArgs = &pInst->createArgs;
-	
+
 	if(outDataFmt.streamId < pVipCreateArgs->numStream)
-	{		
+	{
 		outDataFmt.startX = 0;
 		outDataFmt.startY = 0;
 
 #if defined(USE_MCTNF) && !defined(VNF_BEFORE_MCTNF)
 		if(pPrm->isVnfON == 1)
 		{
-			UTILS_assert((outDataFmt.dataFmt == FVID2_DF_YUV420SP_UV) || 
-			             (outDataFmt.dataFmt == FVID2_DF_YUV420SP_VU)); 		
+			UTILS_assert((outDataFmt.dataFmt == FVID2_DF_YUV420SP_UV) ||
+			             (outDataFmt.dataFmt == FVID2_DF_YUV420SP_VU));
 		}
-		
+
 		if(pPrm->isVnfON == 0)
 		{
-			UTILS_assert((outDataFmt.dataFmt == FVID2_DF_YUV422I_UYVY) || 
-			             (outDataFmt.dataFmt == FVID2_DF_YUV422I_YUYV) ||		
-						 (outDataFmt.dataFmt == FVID2_DF_YUV422I_YVYU) ||		
-						 (outDataFmt.dataFmt == FVID2_DF_YUV422I_VYUY));		
+			UTILS_assert((outDataFmt.dataFmt == FVID2_DF_YUV422I_UYVY) ||
+			             (outDataFmt.dataFmt == FVID2_DF_YUV422I_YUYV) ||
+						 (outDataFmt.dataFmt == FVID2_DF_YUV422I_YVYU) ||
+						 (outDataFmt.dataFmt == FVID2_DF_YUV422I_VYUY));
 		}
-#else		
+#else
 		if((pPrm->isVnfON == 1) && (pObj->createArgs.vnfFullResolution == 0))
 		{
-			UTILS_assert((outDataFmt.dataFmt == FVID2_DF_YUV420SP_UV) || 
-			             (outDataFmt.dataFmt == FVID2_DF_YUV420SP_VU)); 
-		
+			UTILS_assert((outDataFmt.dataFmt == FVID2_DF_YUV420SP_UV) ||
+			             (outDataFmt.dataFmt == FVID2_DF_YUV420SP_VU));
+
 			pObj->createArgs.vnfFullResolution = 1;
-			
+
 			outDataFmt.startX = 16;
-			outDataFmt.startY = 18;			
+			outDataFmt.startY = 18;
 		}
-		
+
 		if((pPrm->isVnfON == 0) && (pObj->createArgs.vnfFullResolution == 1))
 		{
-			UTILS_assert((outDataFmt.dataFmt == FVID2_DF_YUV422I_UYVY) || 
-			             (outDataFmt.dataFmt == FVID2_DF_YUV422I_YUYV) ||		
-						 (outDataFmt.dataFmt == FVID2_DF_YUV422I_YVYU) ||		
+			UTILS_assert((outDataFmt.dataFmt == FVID2_DF_YUV422I_UYVY) ||
+			             (outDataFmt.dataFmt == FVID2_DF_YUV422I_YUYV) ||
+						 (outDataFmt.dataFmt == FVID2_DF_YUV422I_YVYU) ||
 						 (outDataFmt.dataFmt == FVID2_DF_YUV422I_VYUY));
-		
+
 			pObj->createArgs.vnfFullResolution = 0;
 		}
-#endif		
-		
+#endif
+
 		/* Stop the Camera Link */
 		CameraLink_drvStop(pObj);
-		
+
 		status = FVID2_control(pInst->cameraVipHandle,
 							   IOCTL_ISS_CAPT_SET_OUTDATAFMT,
 							   &outDataFmt,
 							   NULL);
-		UTILS_assert(status == FVID2_SOK);			
-		
+		UTILS_assert(status == FVID2_SOK);
+
 		/* Restart the Camera Link */
-		CameraLink_drvStart(pObj);		
+		CameraLink_drvStart(pObj);
 	}
-	
+
 	return (FVID2_SOK);
 }

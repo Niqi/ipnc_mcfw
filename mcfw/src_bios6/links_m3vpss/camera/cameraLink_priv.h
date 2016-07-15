@@ -153,7 +153,8 @@ typedef enum {
     AEWB_ID_NONE = 0,
     AEWB_ID_APPRO,
     AEWB_ID_TI,
-    AEWB_ID_MAXNUM = 3
+    AEWB_ID_DEV,
+    AEWB_ID_MAXNUM
 } AEWB_VENDOR;
 
 typedef enum {

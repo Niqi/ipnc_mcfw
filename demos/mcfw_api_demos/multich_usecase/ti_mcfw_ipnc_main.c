@@ -59,8 +59,8 @@
 //#define TEST_MPSCLR_ENABLE
 //#define TEST_SCLR_DYN_RES
 
-#ifdef TEST_SCLR_DYN_RES		
-	#include <mcfw/src_linux/mcfw_api/ti_vcam_priv.h>	
+#ifdef TEST_SCLR_DYN_RES
+	#include <mcfw/src_linux/mcfw_api/ti_vcam_priv.h>
 	UInt32 gTestCnt = 0;
 #endif
 
@@ -124,8 +124,10 @@ Void App_loadDemo(Void)
 
 #ifdef IPNC_DSS_ON
     /* load module fb */
+	OSA_printf("Jery %s %d\n",__FUNCTION__,__LINE__);
     system("insmod ./kermod/vpss.ko mode=hdmi:1080p-60 sbufaddr=0xbfb00000");
-    system("insmod ./kermod/ti81xxhdmi.ko 2> /dev/null");
+	OSA_printf("Jery %s %d\n",__FUNCTION__,__LINE__);
+    //system("insmod ./kermod/ti81xxhdmi.ko 2> /dev/null");
     /* Enable range compression in HDMI 0..255 to 16..235 . This is needed
      * for consumer HDTVs */
     system("./bin/mem_rdwr.out --wr 0x46c00524 2");
@@ -414,7 +416,7 @@ Void App_runDemo(Void)
 
     /* Init the application specific module which will handle bitstream
      * exchange */
-	App_streamSysInit();		
+	App_streamSysInit();
     App_ipcBitsInit();
 
     /* Init the application specific module which will handle video frame exchange */
@@ -477,7 +479,7 @@ Void App_runDemo(Void)
     }
 
 	gUI_mcfw_config.initDone = 1;
-	
+
     OSA_printf("\nApplication Run Completed\n");
 }
 
@@ -514,7 +516,7 @@ Void App_stopDemo()
 
     App_ipcBitsStop();
 	App_streamSysExit();
-	
+
     App_ipcFramesStop();
 
     dccParamDelete();
@@ -562,7 +564,7 @@ Void App_stopDemo()
     }
 
     Vsys_exit();
-	
+
     OSA_printf("\nApplication Stop Completed\n");
 }
 
@@ -682,7 +684,7 @@ int main(int argc, char **argv)
 
 #ifdef TEST_DYN_RES_CHANGE
     VCAM_CHN_DYNAMIC_PARAM_S camChnDynaParam;
-    UInt32 resFlag = 0;    
+    UInt32 resFlag = 0;
 #endif
 
 #ifdef TEST_DYN_MODE_CHANGE
@@ -708,7 +710,7 @@ int main(int argc, char **argv)
     memset(&gUI_mcfw_config, FALSE, sizeof(gUI_mcfw_config));
 
     OSA_attachSignalHandler(SIGINT, UI_signalHandler);
-	
+
 	App_msgHandlerInit(stream_get_handle());
 
     gUI_mcfw_config.demoCfg.usecase_id  = TRI_STREAM_USECASE;
@@ -762,6 +764,9 @@ int main(int argc, char **argv)
 #endif
 #ifdef IMGS_MICRON_MT9M034
     gUI_mcfw_config.sensorId = MT_9M034;
+#endif
+#ifdef IMGS_SONY_IMX291
+	gUI_mcfw_config.sensorId = SN_IMX291;
 #endif
 
     gUI_mcfw_config.audioCfg.enable     = FALSE;
@@ -929,7 +934,7 @@ int main(int argc, char **argv)
         gUI_mcfw_config.glbceEnable = (1+gUI_mcfw_config.glbceStrength);
     else
         gUI_mcfw_config.glbceEnable = 0;
-		
+
     while (done==FALSE)
     {
         if (gUI_mcfw_config.demoCfg.runDemo == FALSE)
@@ -1012,10 +1017,10 @@ int main(int argc, char **argv)
 				Vcam_enableDisableMpScalerCh(gVdisModuleContext.mpSclrId,
 											 0,
 											 enable);
-				enable = (enable == 1)?0:1;								
+				enable = (enable == 1)?0:1;
 #endif // #ifdef TEST_MPSCLR_ENABLE
 
-#ifdef TEST_SCLR_DYN_RES			
+#ifdef TEST_SCLR_DYN_RES
 				if(gTestCnt == 0)
 				{
 					printf("#### Changing Sclr Out Resolution to 1280x1024 ...\n");
@@ -1024,9 +1029,9 @@ int main(int argc, char **argv)
 												1280,
 												1024,
 												1280,
-												1280);					
+												1280);
 				}
-				
+
 				if(gTestCnt == 1)
 				{
 					printf("#### Changing Sclr Out Resolution to 640x480 ...\n");
@@ -1036,9 +1041,9 @@ int main(int argc, char **argv)
 												480,
 												640,
 												640);
-				}			
-				
-				gTestCnt ++;							
+				}
+
+				gTestCnt ++;
 #endif
 
                 OSA_printf("\nUsecase is Active !!! \n");
@@ -1134,7 +1139,7 @@ int main(int argc, char **argv)
     }
 
 	App_msgHandlerExit(stream_get_handle());
-	
+
     OSA_printf("\nExiting Usecase !!! \n");
 
     return 0;

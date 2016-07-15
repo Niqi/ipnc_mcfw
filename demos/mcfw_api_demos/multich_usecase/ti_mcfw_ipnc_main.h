@@ -112,7 +112,8 @@ typedef enum {
     AL_AL30210,
     OM_OV2710,
     SN_IMX122,
-    SN_IMX140
+    SN_IMX140,
+    SN_IMX291,
 } UI_SENSOR_MODE;
 
 typedef enum {
@@ -172,13 +173,13 @@ typedef struct {
 
     int glbceEnable;
     int glbceStrength;
-	
+
 	int initDone;
 
 #ifdef USE_MCTNF
 	int prevMinWtForCurQ8;
-#endif	
-	
+#endif
+
 } UI_mcfw_config;
 
 extern UI_mcfw_config gUI_mcfw_config;

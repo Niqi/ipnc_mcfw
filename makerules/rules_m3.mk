@@ -70,8 +70,9 @@ ifeq ($(PROFILE_$(CORE)), release)
  ifndef MODULE_NAME
   CFLAGS_XDCINTERNAL += -Dxdc_cfg__header__='$(CONFIGURO_DIR)/package/cfg/$(XDC_HFILE_NAME)_pem3.h' 
  endif
- LNKFLAGS_INTERNAL_PROFILE += --opt='--endian=$(ENDIAN) -mv7M3 --abi=$(CSWITCH_FORMAT) -qq -pdsw225 $(CFLAGS_GLOBAL_$(CORE)) -oe  -ms -op2 -O3 -k -os --optimize_with_debug --inline_recursion_limit=20 --diag_suppress=23000' --strict_compatibility=on --unused_section_elimination=on
-endif
+ #LNKFLAGS_INTERNAL_PROFILE += --opt='--endian=$(ENDIAN) -mv7M3 --abi=$(CSWITCH_FORMAT) -qq -pdsw225 $(CFLAGS_GLOBAL_$(CORE)) -oe  -ms -op2 -O3 -k -os --optimize_with_debug --inline_recursion_limit=20 --diag_suppress=23000' --strict_compatibility=on --unused_section_elimination=on
+LNKFLAGS_INTERNAL_PROFILE =
+ endif
 
 
 # Following 'if...' block is for an application; to add a #define for each
@@ -158,6 +159,22 @@ $(LIBDIR)/$(MODULE_NAME).$(LIBEXT) : $(OBJ_PATHS) $(AOBJ_PATHS)
 	$(ECHO) \# Archiving $(PLATFORM):$(CORE):$(PROFILE_$(CORE)):$(MODULE_NAME)
 	$(ECHO) \#
 	$(AR) $(ARFLAGS) $@ $(OBJ_PATHS) $(AOBJ_PATHS)
+# add by Jerry 2016.6.12
+ifneq ($(DEV2A_INC_LIB),)
+	@echo Compling dev2a lib...
+	@echo $@
+	@mkdir -p $(dev2a_PATH)/target
+	@cp $@ $(dev2a_PATH)/target/
+	@$(foreach i, $(DEV2A_INC_LIB), \
+	cd $(dev2a_PATH)/target;\
+	$(AR) -x $(i);\
+	cd ..;)
+	chmod 777 $(dev2a_PATH)/target/*.oem3
+	$(AR) $(ARFLAGS) $(dev2a_PATH)/iss_dev2a.aem3 $(dev2a_PATH)/target/*.oem3 $(AOBJ_PATHS)
+	
+	rm $(dev2a_PATH)/target/*.oem3
+endif
+	
 
 # Linker options and rules
 LNKFLAGS_INTERNAL_COMMON = --emit_warnings_as_errors -w -q -u _c_int00 -c --dynamic
@@ -195,7 +212,7 @@ LIB_PATHS +=            $(iss_PATH)/packages/ti/psp/iss/alg/aewb/ti2a/awb/lib/re
 			$(iss_PATH)/packages/ti/psp/iss/alg/jpeg_enc/lib/release/iss_jpeg_enc.aem3 \
 			$(iss_PATH)/packages/ti/psp/iss/alg/wdr/lib/release/iss_wdr.aem3 \
 			$(MCFW_ROOT_PATH)/mcfw/src_bios6/links_m3vpss/alg/dmva/lib/dmval_elf.aem3
-
+LIB_PATHS +=$(dev2a_PATH)/iss_dev2a.aem3
 LNK_LIBS = $(addprefix -l,$(LIB_PATHS))
 # Linker - to create executable file
 
