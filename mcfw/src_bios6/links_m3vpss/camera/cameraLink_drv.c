@@ -1904,7 +1904,9 @@ Int32 CameraLink_drvAllocAndQueueFrames(CameraLink_Obj * pObj,
                 pFrameInfo[frameId].rtChInfoUpdate = TRUE;
 
                 frameList.frames[frameId] = &frames[frameId];
-
+				Vps_rprintf("[streamId=%d][chId=%d][num=%d],0x%x\n",
+					streamId,chId,gCameraLink_framesPerChannel,
+					frames[frameId].addr[0][0]);
 #ifdef SYSTEM_VERBOSE_PRINTS
                 if (pDrvObj->instId == 0 && streamId == 0 && chId == 0)
                 {

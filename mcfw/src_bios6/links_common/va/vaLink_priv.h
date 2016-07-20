@@ -106,7 +106,7 @@ typedef struct {
 	UInt32 eventStartTime;
 
 	UInt32 startCnt;
-			
+
 } VaLink_algObj;
 
 typedef struct {
@@ -122,6 +122,7 @@ typedef struct {
 	VaLink_perFrameConfig perFrameCfg[VA_LINK_MAX_OUT_FRAMES];
     FVID2_Format bufferFrameFormat;
     Utils_BufHndl outFrameQue;
+	Utils_BufHndl processFrameQue;
 	System_FrameInfo frameInfo[VA_LINK_MAX_OUT_FRAMES];
     VaLink_algObj algObj;
 	VaLink_GuiParams guiPrm;
@@ -144,7 +145,11 @@ void DM81XX_EDMA3_setParams(int chId, int dmaQueue, unsigned int srcAddr,
                             unsigned short edmaHeight, short srcLineOffset,
                             short dstLineOffset);
 
-void DM81XX_EDMA3_triggerTransfer(int chId);
+void DM81XX_EDMA3_triggerTransfer(int chId,
+								unsigned int dstAddr,
+                            	unsigned short edmaWidth,
+                            	unsigned short edmaHeight);
+
 
 /* ===================================================================
  *  @func     VaLink_drvCreateFvidObj
@@ -170,13 +175,13 @@ Int32 VaLink_algCreate(VaLink_Obj * pObj);
 Int32 VaLink_algCopyFrames(VaLink_Obj * pObj);
 Int32 VaLink_algProcessFrames(VaLink_Obj * pObj);
 
-Int32 VaLink_algSetTZPrm(VaLink_Obj *pObj);
-Int32 VaLink_algSetMainPrm(VaLink_Obj *pObj);
-Int32 VaLink_algSetCTDPrm(VaLink_Obj *pObj);
-Int32 VaLink_algSetOCPrm(VaLink_Obj *pObj);
-Int32 VaLink_algSetSMETAPrm(VaLink_Obj *pObj);
-Int32 VaLink_algSetIMDPrm(VaLink_Obj *pObj);
-Int32 VaLink_algSetFrameRate(VaLink_Obj *pObj);
+//Int32 VaLink_algSetTZPrm(VaLink_Obj *pObj);
+//Int32 VaLink_algSetMainPrm(VaLink_Obj *pObj);
+//Int32 VaLink_algSetCTDPrm(VaLink_Obj *pObj);
+//Int32 VaLink_algSetOCPrm(VaLink_Obj *pObj);
+//Int32 VaLink_algSetSMETAPrm(VaLink_Obj *pObj);
+//Int32 VaLink_algSetIMDPrm(VaLink_Obj *pObj);
+//Int32 VaLink_algSetFrameRate(VaLink_Obj *pObj);
 
 /* ===================================================================
  *  @func     VaLink_drvDeleteFvidObj

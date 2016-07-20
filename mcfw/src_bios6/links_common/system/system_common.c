@@ -458,13 +458,13 @@ int System_getEdmaCh(SystemCommon_edmaChPrm *pEdmaPrm)
 					   sizeof(SystemCommon_edmaChPrm),
 					   TRUE);
 
-	/* 
+	/*
 	   By deafult EDMA ch is mapped to Shadow region 0
-	   It should be cleared as Shadow region 0 doesn't work on M3 and DSP	
+	   It should be cleared as Shadow region 0 doesn't work on M3 and DSP
 	*/
 
 	DM81XX_EDMA3_clrShadowRgn0(pEdmaPrm->dmaHndl.chId);
-	
+
 	return 0;
 }
 
