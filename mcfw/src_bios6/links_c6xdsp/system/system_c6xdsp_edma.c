@@ -1,20 +1,21 @@
 /** ==================================================================
- *  @file   system_m3vpss_edma.c                                                  
- *                                                                    
- *  @path    ipnc_mcfw/mcfw/src_bios6/links_m3vpss/system/                                                 
- *                                                                    
- *  @desc   This  File contains.                                      
+ *  @file   system_m3vpss_edma.c
+ *
+ *  @path    ipnc_mcfw/mcfw/src_bios6/links_m3vpss/system/
+ *
+ *  @desc   This  File contains.
  * ===================================================================
- *  Copyright (c) Texas Instruments Inc 2011, 2012                    
- *                                                                    
+ *  Copyright (c) Texas Instruments Inc 2011, 2012
+ *
  *  Use of this software is controlled by the terms and conditions found
  *  in the license agreement under which this software has been supplied
  * ===================================================================*/
-/* 
+/*
  *   EDMA3 programming for DM81XX
  */
 
 /* EDMA3 Channel Controller Registers */
+#include <mcfw/src_bios6/links_c6xdsp/system/system_priv_c6xdsp.h>
 
 /* Global Registers */
 #define DM81XX_EDMA3_CC_BASE        (0x49000000)
@@ -70,24 +71,24 @@
 /* EDMA3 set params */
 
 /* ===================================================================
- *  @func     DM81XX_EDMA3_setParams                                               
- *                                                                    
- *  @desc     Function does the following                             
- *                                                                    
- *  @modif    This function modifies the following structures         
- *                                                                    
- *  @inputs   This function takes the following inputs                
- *            <argument name>                                         
- *            Description of usage                                    
- *            <argument name>                                         
- *            Description of usage                                    
- *                                                                    
- *  @outputs  <argument name>                                         
- *            Description of usage                                    
- *                                                                    
- *  @return   Return value of this function if any                    
+ *  @func     DM81XX_EDMA3_setParams
+ *
+ *  @desc     Function does the following
+ *
+ *  @modif    This function modifies the following structures
+ *
+ *  @inputs   This function takes the following inputs
+ *            <argument name>
+ *            Description of usage
+ *            <argument name>
+ *            Description of usage
+ *
+ *  @outputs  <argument name>
+ *            Description of usage
+ *
+ *  @return   Return value of this function if any
  *  ==================================================================
- */                                                                   
+ */
 void DM81XX_EDMA3_setParams(int chId,
                             int dmaQueue,
                             unsigned int srcAddr,
@@ -102,88 +103,92 @@ void DM81XX_EDMA3_setParams(int chId,
 
     volatile unsigned int dmaQnum = DM81XX_EDMA3_DMAQNUM0 + ((chId / 8) * 4);
 
+	/* Jerry add 2013-9-13*/
+	Cache_wb((xdc_Ptr)srcAddr,edmaWidth*edmaHeight,Cache_Type_ALL,TRUE);
+	/* add end*/
+
     /* PaRAM entry setup */
-    *((volatile unsigned int *) (PaRAMEntryAddr + OPT)) = ((0) |    // SAM -> 
-                                                                    // 
+    *((volatile unsigned int *) (PaRAMEntryAddr + OPT)) = ((0) |    // SAM ->
+                                                                    //
                                                            // INCR
                                                            // mode
-                                                           (0 << 1) |   // DAM 
-                                                                        // 
-                                                           // -> 
-                                                           // INCR 
+                                                           (0 << 1) |   // DAM
+                                                                        //
+                                                           // ->
+                                                           // INCR
                                                            // mode
-                                                           (1 << 2) |   // SYNCDIM 
-                                                                        // 
-                                                           // -> 
-                                                           // AB 
+                                                           (1 << 2) |   // SYNCDIM
+                                                                        //
+                                                           // ->
+                                                           // AB
                                                            // synchronized
-                                                           (0 << 3) |   // STATIC 
-                                                                        // 
-                                                           // -> 
-                                                           // non-static 
+                                                           (0 << 3) |   // STATIC
+                                                                        //
+                                                           // ->
+                                                           // non-static
                                                            // mode
-                                                           (4 << 8) |   // FWID 
-                                                                        // 
-                                                           // -> 
-                                                           // FIFO 
-                                                           // width 
-                                                           // is 
-                                                           // 128 
+                                                           (4 << 8) |   // FWID
+                                                                        //
+                                                           // ->
+                                                           // FIFO
+                                                           // width
+                                                           // is
+                                                           // 128
                                                            // bits
-                                                           (0 << 11) |  // TCCMODE 
-                                                                        // 
-                                                           // -> 
-                                                           // Normal 
+                                                           (0 << 11) |  // TCCMODE
+                                                                        //
+                                                           // ->
+                                                           // Normal
                                                            // completion
-                                                           (chId << 12) |   // TCC 
-                                                                            // 
-                                                           // -> 
-                                                           // Transfer 
-                                                           // Completion 
+                                                           (chId << 12) |   // TCC
+                                                                            //
+                                                           // ->
+                                                           // Transfer
+                                                           // Completion
                                                            // Code
-                                                           (1 << 20) |  // TCINTEN 
-                                                                        // 
-                                                           // -> 
-                                                           // Transfer 
-                                                           // Complete 
-                                                           // Interrupt 
-                                                           // is 
+                                                           (1 << 20) |  // TCINTEN
+                                                                        //
+                                                           // ->
+                                                           // Transfer
+                                                           // Complete
+                                                           // Interrupt
+                                                           // is
                                                            // enabled
-                                                           (0 << 21) |  // ITCINTEN 
-                                                                        // 
-                                                           // -> 
-                                                           // Intermediate 
-                                                           // transfer 
-                                                           // complete 
-                                                           // interrupt 
-                                                           // is 
+                                                           (0 << 21) |  // ITCINTEN
+                                                                        //
+                                                           // ->
+                                                           // Intermediate
+                                                           // transfer
+                                                           // complete
+                                                           // interrupt
+                                                           // is
                                                            // disabled
-                                                           (0 << 22) |  // TCCHEN 
-                                                                        // 
-                                                           // -> 
-                                                           // Transfer 
-                                                           // Complete 
-                                                           // Chaining 
-                                                           // is 
+                                                           (0 << 22) |  // TCCHEN
+                                                                        //
+                                                           // ->
+                                                           // Transfer
+                                                           // Complete
+                                                           // Chaining
+                                                           // is
                                                            // disabled
-                                                           (0 << 23) |  // ITCCHEN 
-                                                                        // 
-                                                           // -> 
-                                                           // Intermediate 
-                                                           // transfer 
-                                                           // complete 
-                                                           // chaining 
-                                                           // is 
+                                                           (0 << 23) |  // ITCCHEN
+                                                                        //
+                                                           // ->
+                                                           // Intermediate
+                                                           // transfer
+                                                           // complete
+                                                           // chaining
+                                                           // is
                                                            // disabled
-                                                           (0 << 24));  // PRIVID 
-                                                                        // 
-    // -> 
-    // Privilege 
-    // identification 
-    // for 
-    // the 
-    // external 
-    // host/CPU/DMA 
+                                                           (0 << 24));  // PRIVID
+                                                                        //
+    // ->
+    // Privilege
+    // identification
+    // for
+    // the
+    // external
+    // host/CPU/DMA
     // that
 
     *((volatile unsigned int *) (PaRAMEntryAddr + SRC)) = srcAddr;
@@ -199,7 +204,7 @@ void DM81XX_EDMA3_setParams(int chId,
     *((volatile unsigned int *) (PaRAMEntryAddr + CCNT)) = 1;
 
     if (chId < 32)
-    {	
+    {
         /* Set Shadow region for the channel */
         *((volatile unsigned int *) DM81XX_EDMA3_DRAE5) |= (1 << chId);
 
@@ -207,7 +212,7 @@ void DM81XX_EDMA3_setParams(int chId,
         *((volatile unsigned int *) DM81XX_EDMA3_IESR) |= (1 << chId);
     }
     else
-    {	
+    {
         /* Set Shadow region for the channel */
         *((volatile unsigned int *) DM81XX_EDMA3_DRAE5H) |= (1 << (chId - 32));
 
@@ -218,7 +223,7 @@ void DM81XX_EDMA3_setParams(int chId,
     /* channel to PaRAM entry mapping */
     *((volatile unsigned int *) dchmapChId) = (chId << 5); // maintainig one
     // to one mapping
-    // between channel 
+    // between channel
     // and PaRAM entry
 
     /* channel to queue mapping */
@@ -228,25 +233,29 @@ void DM81XX_EDMA3_setParams(int chId,
 /* EDMA3 trigger transfer */
 
 /* ===================================================================
- *  @func     DM81XX_EDMA3_triggerTransfer                                               
- *                                                                    
- *  @desc     Function does the following                             
- *                                                                    
- *  @modif    This function modifies the following structures         
- *                                                                    
- *  @inputs   This function takes the following inputs                
- *            <argument name>                                         
- *            Description of usage                                    
- *            <argument name>                                         
- *            Description of usage                                    
- *                                                                    
- *  @outputs  <argument name>                                         
- *            Description of usage                                    
- *                                                                    
- *  @return   Return value of this function if any                    
+ *  @func     DM81XX_EDMA3_triggerTransfer
+ *
+ *  @desc     Function does the following
+ *
+ *  @modif    This function modifies the following structures
+ *
+ *  @inputs   This function takes the following inputs
+ *            <argument name>
+ *            Description of usage
+ *            <argument name>
+ *            Description of usage
+ *
+ *  @outputs  <argument name>
+ *            Description of usage
+ *
+ *  @return   Return value of this function if any
  *  ==================================================================
- */                                                                   
-void DM81XX_EDMA3_triggerTransfer(int chId)
+ */
+
+void DM81XX_EDMA3_triggerTransfer(int chId,
+								unsigned int dstAddr,
+                            	unsigned short edmaWidth,
+                            	unsigned short edmaHeight)
 {
     volatile unsigned int data;
 
@@ -286,29 +295,33 @@ void DM81XX_EDMA3_triggerTransfer(int chId)
         /* clear the interrupt */
         *((volatile unsigned int *) DM81XX_EDMA3_ICRH) |= (1 << (chId - 32));
     }
+
+	/* Jerry add 2013-9-13*/
+	Cache_inv((xdc_Ptr)dstAddr,edmaWidth*edmaHeight,Cache_Type_ALL,TRUE);
+	/* add end*/
 }
 
 /* memset using EDMA transfer */
 
 /* ===================================================================
- *  @func     DM81XX_EDMA3_memset                                               
- *                                                                    
- *  @desc     Function does the following                             
- *                                                                    
- *  @modif    This function modifies the following structures         
- *                                                                    
- *  @inputs   This function takes the following inputs                
- *            <argument name>                                         
- *            Description of usage                                    
- *            <argument name>                                         
- *            Description of usage                                    
- *                                                                    
- *  @outputs  <argument name>                                         
- *            Description of usage                                    
- *                                                                    
- *  @return   Return value of this function if any                    
+ *  @func     DM81XX_EDMA3_memset
+ *
+ *  @desc     Function does the following
+ *
+ *  @modif    This function modifies the following structures
+ *
+ *  @inputs   This function takes the following inputs
+ *            <argument name>
+ *            Description of usage
+ *            <argument name>
+ *            Description of usage
+ *
+ *  @outputs  <argument name>
+ *            Description of usage
+ *
+ *  @return   Return value of this function if any
  *  ==================================================================
- */                                                                   
+ */
 void DM81XX_EDMA3_memset(int chId, int dmaQueue, unsigned int setValue,
                          unsigned int dstAddr, unsigned short setWidth,
                          unsigned short setHeight, short lineOffset)
@@ -328,87 +341,87 @@ void DM81XX_EDMA3_memset(int chId, int dmaQueue, unsigned int setValue,
     }
 
     /* PaRAM entry setup */
-    *((volatile unsigned int *) (PaRAMEntryAddr + OPT)) = ((0) |    // SAM -> 
-                                                                    // 
+    *((volatile unsigned int *) (PaRAMEntryAddr + OPT)) = ((0) |    // SAM ->
+                                                                    //
                                                            // INCR
                                                            // mode
-                                                           (0 << 1) |   // DAM 
-                                                                        // 
-                                                           // -> 
-                                                           // INCR 
+                                                           (0 << 1) |   // DAM
+                                                                        //
+                                                           // ->
+                                                           // INCR
                                                            // mode
-                                                           (1 << 2) |   // SYNCDIM 
-                                                                        // 
-                                                           // -> 
-                                                           // AB 
+                                                           (1 << 2) |   // SYNCDIM
+                                                                        //
+                                                           // ->
+                                                           // AB
                                                            // synchronized
-                                                           (0 << 3) |   // STATIC 
-                                                                        // 
-                                                           // -> 
-                                                           // non-static 
+                                                           (0 << 3) |   // STATIC
+                                                                        //
+                                                           // ->
+                                                           // non-static
                                                            // mode
-                                                           (4 << 8) |   // FWID 
-                                                                        // 
-                                                           // -> 
-                                                           // FIFO 
-                                                           // width 
-                                                           // is 
-                                                           // 128 
+                                                           (4 << 8) |   // FWID
+                                                                        //
+                                                           // ->
+                                                           // FIFO
+                                                           // width
+                                                           // is
+                                                           // 128
                                                            // bits
-                                                           (0 << 11) |  // TCCMODE 
-                                                                        // 
-                                                           // -> 
-                                                           // Normal 
+                                                           (0 << 11) |  // TCCMODE
+                                                                        //
+                                                           // ->
+                                                           // Normal
                                                            // completion
-                                                           (chId << 12) |   // TCC 
-                                                                            // 
-                                                           // -> 
-                                                           // Transfer 
-                                                           // Completion 
+                                                           (chId << 12) |   // TCC
+                                                                            //
+                                                           // ->
+                                                           // Transfer
+                                                           // Completion
                                                            // Code
-                                                           (1 << 20) |  // TCINTEN 
-                                                                        // 
-                                                           // -> 
-                                                           // Transfer 
-                                                           // Complete 
-                                                           // Interrupt 
-                                                           // is 
+                                                           (1 << 20) |  // TCINTEN
+                                                                        //
+                                                           // ->
+                                                           // Transfer
+                                                           // Complete
+                                                           // Interrupt
+                                                           // is
                                                            // enabled
-                                                           (0 << 21) |  // ITCINTEN 
-                                                                        // 
-                                                           // -> 
-                                                           // Intermediate 
-                                                           // transfer 
-                                                           // complete 
-                                                           // interrupt 
-                                                           // is 
+                                                           (0 << 21) |  // ITCINTEN
+                                                                        //
+                                                           // ->
+                                                           // Intermediate
+                                                           // transfer
+                                                           // complete
+                                                           // interrupt
+                                                           // is
                                                            // disabled
-                                                           (0 << 22) |  // TCCHEN 
-                                                                        // 
-                                                           // -> 
-                                                           // Transfer 
-                                                           // Complete 
-                                                           // Chaining 
-                                                           // is 
+                                                           (0 << 22) |  // TCCHEN
+                                                                        //
+                                                           // ->
+                                                           // Transfer
+                                                           // Complete
+                                                           // Chaining
+                                                           // is
                                                            // disabled
-                                                           (0 << 23) |  // ITCCHEN 
-                                                                        // 
-                                                           // -> 
-                                                           // Intermediate 
-                                                           // transfer 
-                                                           // complete 
-                                                           // chaining 
-                                                           // is 
+                                                           (0 << 23) |  // ITCCHEN
+                                                                        //
+                                                           // ->
+                                                           // Intermediate
+                                                           // transfer
+                                                           // complete
+                                                           // chaining
+                                                           // is
                                                            // disabled
-                                                           (0 << 24));  // PRIVID 
-                                                                        // 
-    // -> 
-    // Privilege 
-    // identification 
-    // for 
-    // the 
-    // external 
-    // host/CPU/DMA 
+                                                           (0 << 24));  // PRIVID
+                                                                        //
+    // ->
+    // Privilege
+    // identification
+    // for
+    // the
+    // external
+    // host/CPU/DMA
     // that
 
     *((volatile unsigned int *) (PaRAMEntryAddr + SRC)) = dstAddr;
@@ -424,7 +437,7 @@ void DM81XX_EDMA3_memset(int chId, int dmaQueue, unsigned int setValue,
     *((volatile unsigned int *) (PaRAMEntryAddr + CCNT)) = 1;
 
     if (chId < 32)
-    {		
+    {
 		/* Set Shadow region for the channel */
         *((volatile unsigned int *) DM81XX_EDMA3_DRAE5) |= (1 << chId);
 
@@ -432,7 +445,7 @@ void DM81XX_EDMA3_memset(int chId, int dmaQueue, unsigned int setValue,
         *((volatile unsigned int *) DM81XX_EDMA3_IESR) |= (1 << chId);
     }
     else
-    {	
+    {
         /* Set Shadow region for the channel */
         *((volatile unsigned int *) DM81XX_EDMA3_DRAE5H) |= (1 << (chId - 32));
 
@@ -441,10 +454,10 @@ void DM81XX_EDMA3_memset(int chId, int dmaQueue, unsigned int setValue,
     }
 
     /* channel to PaRAM entry mapping */
-    *((volatile unsigned int *) dchmapChId) = (chId << 5); // maintaining one 
-                                                           // 
+    *((volatile unsigned int *) dchmapChId) = (chId << 5); // maintaining one
+                                                           //
     // to one mapping
-    // between channel 
+    // between channel
     // and PaRAM entry
 
     /* channel to queue mapping */
@@ -493,34 +506,34 @@ void DM81XX_EDMA3_memset(int chId, int dmaQueue, unsigned int setValue,
 /* memset using EDMA transfer */
 
 /* ===================================================================
- *  @func     DM81XX_EDMA3_clrShadowRgn0                                               
- *                                                                    
- *  @desc     Function does the following                             
- *                                                                    
- *  @modif    This function modifies the following structures         
- *                                                                    
- *  @inputs   This function takes the following inputs                
- *            <argument name>                                         
- *            Description of usage                                    
- *            <argument name>                                         
- *            Description of usage                                    
- *                                                                    
- *  @outputs  <argument name>                                         
- *            Description of usage                                    
- *                                                                    
- *  @return   Return value of this function if any                    
+ *  @func     DM81XX_EDMA3_clrShadowRgn0
+ *
+ *  @desc     Function does the following
+ *
+ *  @modif    This function modifies the following structures
+ *
+ *  @inputs   This function takes the following inputs
+ *            <argument name>
+ *            Description of usage
+ *            <argument name>
+ *            Description of usage
+ *
+ *  @outputs  <argument name>
+ *            Description of usage
+ *
+ *  @return   Return value of this function if any
  *  ==================================================================
- */                                                                  
+ */
 void DM81XX_EDMA3_clrShadowRgn0(int chId)
 {
     if (chId < 32)
     {
         /* Clear the channel in shadow region 0 */
-        *((volatile unsigned int *) DM81XX_EDMA3_DRAE0) &= ~(1 << chId);	
+        *((volatile unsigned int *) DM81XX_EDMA3_DRAE0) &= ~(1 << chId);
     }
     else
     {
         /* Clear the channel in shadow region 0 */
-        *((volatile unsigned int *) DM81XX_EDMA3_DRAE0H) &= ~(1 << (chId - 32));	
+        *((volatile unsigned int *) DM81XX_EDMA3_DRAE0H) &= ~(1 << (chId - 32));
     }
 }

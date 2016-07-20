@@ -246,7 +246,7 @@ extern int AlarmDrvInit(int proc_id);
  *  ==================================================================
  */
 int stream_init(STREAM_PARM * pParm, STREAM_SET * pSet)
-{	
+{
     int cnt = 0;
 
     /* Init memory manager */
@@ -275,7 +275,7 @@ int stream_init(STREAM_PARM * pParm, STREAM_SET * pSet)
         pParm->checkNewFrame[cnt] = 0;
         Rendezvous_open(&(pParm->objRv[cnt]), 2);
     }
-	
+
     pParm->ImageWidth = pSet->ImageWidth;
     pParm->ImageHeight = pSet->ImageHeight;
 
@@ -328,12 +328,12 @@ int App_msgHandlerInit(STREAM_PARM *pParm)
 	int ret = 0;
 
 	CMEM_init();
-	
+
 	ShareMemInit(SYS_MSG_KEY);
-	
+
     pParm->IsQuit = 0;
     pParm->qid = Msg_Init(MSG_KEY);
-	
+
     ret = Init_Msg_Func(pParm);
     if (ret < 0)
     {
@@ -344,8 +344,8 @@ int App_msgHandlerInit(STREAM_PARM *pParm)
     /* Alarm Drv Init */
     AlarmDrvInit(ALARM_MCFW_MSG);
 
-	return STREAM_SUCCESS;	
-} 
+	return STREAM_SUCCESS;
+}
 
 /**
  * @brief   Stream initialization
@@ -404,11 +404,11 @@ int stream_update_vol(STREAM_PARM * pParm,int streamType)
         default:
             break;
     }
-	
+
 	Sem_lock(sem_id);
 	pVidInfo->updateExtraData = 1;
 	Sem_unlock(sem_id);
-	
+
 	return STREAM_SUCCESS;
 }
 
@@ -686,7 +686,7 @@ extern int AlarmDrvExit();
 int stream_end(STREAM_PARM * pParm)
 {
     int cnt = 0;
-	
+
     for (cnt = 0; cnt < GOP_INDEX_NUM; cnt++)
     {
         Rendezvous_force(&(pParm->objRv[cnt]));
@@ -703,7 +703,7 @@ int stream_end(STREAM_PARM * pParm)
 
     CacheMng_Release(&(pParm->MemInfo));
     MemMng_release(&(pParm->MemInfo));
-	
+
     /* Unregister Notify Cb used for APP */
     System_ipcNotifyUnregisterAppCb(SYSTEM_PROC_M3VPSS);
     System_ipcNotifyUnregisterAppCb(SYSTEM_PROC_M3VIDEO);
@@ -748,22 +748,22 @@ int App_msgHandlerExit(STREAM_PARM *pParm)
     pthread_join(pParm->threadControl, (void **) 0);
 
     fprintf(stderr, "Msg_ThrFxn closing...\n");
-	
+
     Msg_Kill(pParm->qid);
     memset(pParm, 0, sizeof(STREAM_PARM));
 
 	fprintf(stderr, "Msg_Kill done...\n");
-	
+
 	/* This delay is required otherwise there is system hang */
 	usleep(50 * 1000);
-	
+
     /* Alarm Drv Exit */
-    AlarmDrvExit();	
-	
+    AlarmDrvExit();
+
 	CMEM_exit();
-	
+
 	return STREAM_SUCCESS;
-} 
+}
 
 /**
  * @brief   Show info
@@ -2110,14 +2110,14 @@ void *Msg_CTRL(void *args)
 					pVidCodecCfgPrm->restartFlag = vidCodecCfgPrm.restartFlag;
                     msgbuf.ret = 0;
                     break;
-                }		
+                }
 				case MSG_CMD_GET_MCFW_INIT_STATUS:
 				{
-					McFWInitStatus *pStatus = (McFWInitStatus*)&msgbuf.mem_info;					
+					McFWInitStatus *pStatus = (McFWInitStatus*)&msgbuf.mem_info;
 					pStatus->initDone = App_getInitStatus();
 					msgbuf.ret = 0;
 					break;
-				}	
+				}
                 default:
                     DBG("default case \n");
                     break;
@@ -2761,7 +2761,7 @@ void stream_feature_setup(int nFeature, void *pParm)
 				{
 					Vdis_startDevAll();
                     Vsys_switchFormatSD(SYSTEM_STD_NTSC);
-				}	
+				}
                 else if(input_val==1)
 				{
 					Vdis_startDevAll();
@@ -2770,7 +2770,7 @@ void stream_feature_setup(int nFeature, void *pParm)
 				else
 				{
 					Vdis_stopDevAll();
-				}	
+				}
 
             break;
         }
@@ -3369,74 +3369,74 @@ void stream_feature_setup(int nFeature, void *pParm)
 		case STREAM_FEATURE_SET_CAMERA_CODECCFG:
 		{
 			UInt32 i;
-			VCODEC_TYPE_E codecType;					
+			VCODEC_TYPE_E codecType;
 			VideoCodecCfg *pVidCodecCfgPrm = (VideoCodecCfg*)pParm;
 			STREAM_PARM *pParm = stream_get_handle();
-		
+
 			pVidCodecCfgPrm->restartFlag = 0;
-		
+
 			if(((pVidCodecCfgPrm->codecCfg[0].width == 1920) && (pVidCodecCfgPrm->codecCfg[0].height == 1080)) &&
 			   ((pVidCodecCfgPrm->codecCfg[1].width == 1920) && (pVidCodecCfgPrm->codecCfg[1].height == 1080)))
 			{
 				/* Dual 1080p use case */
-#ifdef MEMORY_256MB	
+#ifdef MEMORY_256MB
 				if(pParm->MemInfo.mem_layout != MEM_LAYOUT_256MB_DUALSTREAM)
 				{
 					/* Teardown cycle will be performed */
 					pVidCodecCfgPrm->restartFlag = 1;
 				}
-#else				
+#else
 				if(pParm->MemInfo.mem_layout != MEM_LAYOUT_512MB_DUALSTREAM)
 				{
 					/* Teardown cycle will be performed */
 					pVidCodecCfgPrm->restartFlag = 1;
 				}
-#endif				
+#endif
 			}
 			else
 			{
-#ifdef MEMORY_256MB	
+#ifdef MEMORY_256MB
 				if(pParm->MemInfo.mem_layout == MEM_LAYOUT_256MB_DUALSTREAM)
 				{
 					/* Teardown cycle will be performed */
 					pVidCodecCfgPrm->restartFlag = 1;
 				}
-#else				
+#else
 				if(pParm->MemInfo.mem_layout == MEM_LAYOUT_512MB_DUALSTREAM)
 				{
 					/* Teardown cycle will be performed */
 					pVidCodecCfgPrm->restartFlag = 1;
 				}
 #endif
-			}	
-			
+			}
+
 			if(pVidCodecCfgPrm->numStream == 3)
 				gUI_mcfw_config.demoCfg.usecase_id = TRI_STREAM_USECASE;
 			if(pVidCodecCfgPrm->numStream == 2)
 				gUI_mcfw_config.demoCfg.usecase_id = DUAL_STREAM_USECASE;
 			if(pVidCodecCfgPrm->numStream == 1)
-				gUI_mcfw_config.demoCfg.usecase_id = SINGLE_STREAM_USECASE;				
-			
+				gUI_mcfw_config.demoCfg.usecase_id = SINGLE_STREAM_USECASE;
+
 			for(i = 0;i < pVidCodecCfgPrm->numStream;i++)
 			{
 				if(pVidCodecCfgPrm->codecCfg[i].codecType == H264_CODEC)
 				{
-					codecType = VCODEC_TYPE_H264;	
+					codecType = VCODEC_TYPE_H264;
 				}
-				else if(pVidCodecCfgPrm->codecCfg[i].codecType == MPEG4_CODEC)	
+				else if(pVidCodecCfgPrm->codecCfg[i].codecType == MPEG4_CODEC)
 					 {
-					     codecType = VCODEC_TYPE_MPEG4;	
+					     codecType = VCODEC_TYPE_MPEG4;
 					 }
-					 else					 
+					 else
 					 {
-					     codecType = VCODEC_TYPE_MJPEG;	
-					 }	
-			
+					     codecType = VCODEC_TYPE_MJPEG;
+					 }
+
 				Venc_switchCodecAlgCh(i,
 									  codecType,
 									  pVidCodecCfgPrm->codecCfg[i].encPreset);
 			}
-			
+
 			break;
 		}
         default:

@@ -124,9 +124,7 @@ Void App_loadDemo(Void)
 
 #ifdef IPNC_DSS_ON
     /* load module fb */
-	OSA_printf("Jery %s %d\n",__FUNCTION__,__LINE__);
     system("insmod ./kermod/vpss.ko mode=hdmi:1080p-60 sbufaddr=0xbfb00000");
-	OSA_printf("Jery %s %d\n",__FUNCTION__,__LINE__);
     //system("insmod ./kermod/ti81xxhdmi.ko 2> /dev/null");
     /* Enable range compression in HDMI 0..255 to 16..235 . This is needed
      * for consumer HDTVs */
@@ -727,11 +725,11 @@ int main(int argc, char **argv)
     gUI_mcfw_config.ldcEnable           = FALSE;
     gUI_mcfw_config.snfEnable           = TRUE;
     gUI_mcfw_config.tnfEnable           = TRUE;
-    gUI_mcfw_config.noisefilterMode     = DSS_VNF_ON;
+    gUI_mcfw_config.noisefilterMode     = ISS_VNF_ON;//DSS_VNF_ON;//固定用VNF
     gUI_mcfw_config.vnfStrength         = NF_STRENGTH_AUTO;
     gUI_mcfw_config.demoUseCase         = FALSE;
     gUI_mcfw_config.vnfUseCase          = FALSE;
-    gUI_mcfw_config.vaUseCase           = FALSE;
+    gUI_mcfw_config.vaUseCase           = TRUE;//FALSE;//其实可以在web上设置,但是IE浏览器打不开web.
     gUI_mcfw_config.n2A_vendor          = UI_AEWB_ID_NONE;
     gUI_mcfw_config.n2A_mode            = UI_AEWB_OFF;
 
