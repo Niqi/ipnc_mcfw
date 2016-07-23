@@ -41,7 +41,7 @@ extern "C" {
 #if defined(TI_814X_BUILD)
 #define SYSTEM_M3VPSS_FREQ         (SYSTEM_M3CORE_FREQ)
 #define SYSTEM_M3VIDEO_FREQ        (SYSTEM_M3CORE_FREQ)
-#define SYSTEM_DSP_FREQ            (500*1000*1000)
+#define SYSTEM_DSP_FREQ            (750*1000*1000)
 #endif
 #if defined(TI_8107_BUILD)
 #define SYSTEM_M3VPSS_FREQ         (SYSTEM_M3CORE_FREQ)

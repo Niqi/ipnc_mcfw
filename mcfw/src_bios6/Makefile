@@ -12,7 +12,7 @@ INCDIR += $(fc_PATH)
 
 # List all the external components/interfaces, whose interface header files
 #  need to be included for this component
-INCLUDE_EXERNAL_INTERFACES = bios xdc ipc syslink iss hdvpss ipnc_rdk fc xdais h264enc h264dec swosd edma3lld mpeg4enc
+INCLUDE_EXERNAL_INTERFACES = bios xdc ipc syslink iss hdvpss ipnc_rdk fc xdais h264enc h264dec swosd thPlateId edma3lld mpeg4enc
 
 MODULE_SRC_BASE_PATH := $(MCFW_ROOT_PATH)/mcfw/src_bios6
 
@@ -38,9 +38,11 @@ SRCDIR = utils/src links_c6xdsp
 SRCDIR += ../demos/chains/common 
 INCDIR  += $(MODULE_SRC_BASE_PATH)/alg/swosd
 INCDIR  += $(MODULE_SRC_BASE_PATH)/alg/scd
+INCDIR  += $(MODULE_SRC_BASE_PATH)/alg/thPlateId
 include $(MODULE_SRC_BASE_PATH)/links_common/SRC_FILES_DSP.MK
 include $(MODULE_SRC_BASE_PATH)/links_c6xdsp/SRC_FILES.MK
 include $(MODULE_SRC_BASE_PATH)/alg/swosd/SRC_FILES.MK
+include $(MODULE_SRC_BASE_PATH)/alg/thPlateId/SRC_FILES.MK
 endif
 endif
 

@@ -185,7 +185,8 @@ LIB_PATHS += $(RTSLIB_PATH)  \
 			 $(MCFW_ROOT_PATH)/mcfw/src_bios6/alg/scd/lib/scd.ae674	\
 			 $(MCFW_ROOT_PATH)/mcfw/src_bios6/links_c6xdsp/alg/dmva/lib/vlib.ae674	\
 			 $(MCFW_ROOT_PATH)/mcfw/src_bios6/links_c6xdsp/alg/dmva/lib/dmval_elf.ae674 \
-			 $(MCFW_ROOT_PATH)/mcfw/src_bios6/links_c6xdsp/alg/rvm/lib/rvm_C674.lib 			 
+			 $(MCFW_ROOT_PATH)/mcfw/src_bios6/links_c6xdsp/alg/rvm/lib/rvm_C674.lib \
+			 $(MCFW_ROOT_PATH)/mcfw/src_bios6/alg/thPlateId/lib/TH_PlateID_V4.lib
 			 
 
 LNK_LIBS = $(addprefix -l,$(LIB_PATHS))

@@ -142,9 +142,9 @@ var DSS_M3_CODE_SIZE           = 2*MB;
 var DSS_M3_DATA_SIZE           = 34*MB;
 
 /* second 256MB */
-var TILER_SIZE                 = 77*MB; /* Reducing this to fix Vid Frame Alloc failures. Need to fix */ /* MUST be aligned on 128MB boundary */
+var TILER_SIZE                 = 67*MB; /* Reducing this to fix Vid Frame Alloc failures. Need to fix */ /* MUST be aligned on 128MB boundary */
 var DSP_CODE_SIZE              = 1*MB;
-var DSP_DATA_SIZE              = 50*MB;
+var DSP_DATA_SIZE              = 60*MB;
 var SR2_FRAME_BUFFER_SIZE      = 105*MB;  
 var SR0_SIZE                   = 16*MB;
 var HDVPSS_DESC_SIZE           = 2*MB;

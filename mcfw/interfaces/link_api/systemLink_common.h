@@ -168,6 +168,8 @@ extern "C" {
     \param [IN]  None   *
 */
 #define SYSTEM_COMMON_READ_RVM_LUT                 	  (0x9012)
+
+#define SYSTEM_COMMON_VEHICLE_ALG_RESULT            	  (0x9013)
 /* @} */
 
 /**

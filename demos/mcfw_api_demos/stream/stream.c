@@ -2755,6 +2755,7 @@ void stream_feature_setup(int nFeature, void *pParm)
         }
         case STREAM_FEATURE_LOCALDISPLAY:
         {
+#if 0//modified by niqi, cancel display       
             int input_val = *(int *)pParm;
 
                 if(input_val==0)
@@ -2770,8 +2771,8 @@ void stream_feature_setup(int nFeature, void *pParm)
 				else
 				{
 					Vdis_stopDevAll();
-				}
-
+				}	
+#endif
             break;
         }
         case STREAM_FEATURE_OSDENABLE:

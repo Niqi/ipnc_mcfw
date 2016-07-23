@@ -66,6 +66,8 @@ extern "C" {
 #define CAPTURE_LINK_TSK_PRI             (10)
 #define NSF_LINK_TSK_PRI                 (12)
 #define ALG_LINK_TSK_PRI                 (8)
+#define ALGVEHICLE_LINK_TSK_PRI    		 (8)
+#define ALGVEHICLE_LINK_PROCESS_TSK_PRI  (8)
 #define SELECT_LINK_TSK_PRI              (8)
 #define MUX_LINK_TSK_PRI                 (8)
 /* Priority of the SCD should be lowest when ALGLing has only SCD enabled */
@@ -118,6 +120,8 @@ extern "C" {
 #define DEC_LINK_TSK_STACK_SIZE          (SYSTEM_DEFAULT_TSK_STACK_SIZE)
 #define ENC_LINK_TSK_STACK_SIZE          (SYSTEM_DEFAULT_TSK_STACK_SIZE)
 #define ALG_LINK_TSK_STACK_SIZE          (SYSTEM_DEFAULT_TSK_STACK_SIZE)
+#define ALGVEHICLE_LINK_TSK_STACK_SIZE   (SYSTEM_DEFAULT_TSK_STACK_SIZE)
+#define ALGVEHICLE_LINK_PROCESS_TSK_STACK_SIZE   (48*KB)
 #define SYSTEM_MSGQ_TSK_STACK_SIZE       (SYSTEM_DEFAULT_TSK_STACK_SIZE)
 #define MD_TSK_STACK_SIZE                (SYSTEM_DEFAULT_TSK_STACK_SIZE)
 #define SELECT_LINK_TSK_STACK_SIZE       (SYSTEM_TSK_STACK_SIZE_SMALL)

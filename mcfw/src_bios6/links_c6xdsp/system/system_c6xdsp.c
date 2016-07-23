@@ -7,11 +7,12 @@
 
 #include <xdc/std.h>
 #include "system_priv_c6xdsp.h"
-#include <mcfw/interfaces/link_api/algLink.h>
+//#include <mcfw/interfaces/link_api/algLink.h>
 #include <mcfw/interfaces/link_api/vaLink.h>
 #include <mcfw/interfaces/link_api/rvmLink.h>
 #include <mcfw/interfaces/link_api/ipcLink.h>
 #include <mcfw/src_bios6/links_c6xdsp/utils/utils_dsp.h>
+#include <mcfw/interfaces/link_api/algVehicleLink.h>
 
 System_DspObj gSystem_objDsp;
 
@@ -66,12 +67,13 @@ Void System_initLinks()
     Vps_printf(" %d: SYSTEM  : Initializing Links !!! \r\n", Clock_getTicks());
     System_memPrintHeapStatus();
 
-    AlgLink_init();
-	VaLink_init();
+    AlgVehicleLink_init();
+    //AlgLink_init();
+    //VaLink_init();
     NullLink_init();
     MergeLink_init();
     SelectLink_init();
-	RvmLink_init();
+    //RvmLink_init();
 
     Vps_printf(" %d: SYSTEM  : Initializing Links ... DONE !!! \r\n",
                Clock_getTicks());
@@ -85,9 +87,10 @@ Void System_deInitLinks()
     SelectLink_deInit();
     MergeLink_deInit();
     NullLink_deInit();
-	VaLink_deInit();
-    AlgLink_deInit();
-	RvmLink_deInit();
+    //VaLink_deInit();
+    //AlgLink_deInit();
+    AlgVehicleLink_deInit();
+    //RvmLink_deInit();    
 
     Vps_printf(" %d: SYSTEM  : De-Initializing Links ... DONE !!! \r\n",
                Clock_getTicks());

@@ -48,6 +48,9 @@ extern "C" {
 #include <mcfw/interfaces/link_api/mpSclrLink.h>
 #include <mcfw/interfaces/link_api/rvmLink.h>
 
+/* thPlateId header */
+#include <mcfw/interfaces/link_api/algVehicleLink.h>
+
 #include <ti/syslink/utils/IHeap.h>
 #include <ti/syslink/utils/Memory.h>
 #include <ti/ipc/SharedRegion.h>

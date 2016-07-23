@@ -1957,7 +1957,8 @@ Int32 Vdis_startDevAll()
 	Int32 status = 0;
 	UInt32 devId;
 
-	if(gVsysModuleContext.vsysConfig.systemUseCase != VSYS_USECASE_MULTICHN_TRISTREAM_LOWPWR) 
+	if((gVsysModuleContext.vsysConfig.systemUseCase != VSYS_USECASE_MULTICHN_TRISTREAM_LOWPWR)
+           && (gVsysModuleContext.vsysConfig.systemUseCase != VSYS_USECASE_MULTICHN_TRISTREAM_FULLFTR))
 		Vsys_configureDisplay();		
 	
 	for(devId = 0; devId < VDIS_DEV_MAX; devId++)

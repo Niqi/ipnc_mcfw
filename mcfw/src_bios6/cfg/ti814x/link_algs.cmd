@@ -1,4 +1,5 @@
 /* link_algs.cmd */
+/*
 SECTIONS 
 {
    GROUP:
@@ -10,10 +11,11 @@ SECTIONS
             scd.ae674<SCD_dmaMemoryMap.oe674>(.text)
             scd.ae674<SCD_config.oe674>(.text)
             scd.ae674<SCD_detect.oe674>(.text)
-            /*scd.ae674<SCD_segmentFGBlock.oe674>(.text)*/
+            //scd.ae674<SCD_segmentFGBlock.oe674>(.text)
             scd.ae674<SCD_calcSobelEdgeMap.oe674>(.text)
             scd.ae674<SCD_bgModelEWRMeanS16.oe674>(.text)
             scd.ae674<SCD_bgModelEWRVarianceS16.oe674>(.text)
         }
     } > DSP_CODE_MEM  
-}
+}*/
+

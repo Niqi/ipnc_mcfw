@@ -252,6 +252,23 @@ Int32 Vsys_eventHandler(UInt32 eventId, Ptr pPrm, Ptr appData)
 			}
 						
 			break;
+            
+		case SYSTEM_COMMON_VEHICLE_ALG_RESULT:
+			{
+				AlgVehicleLink_ThPlateIdResult *pVehicleAlgrithmResult;
+				pVehicleAlgrithmResult = (AlgVehicleLink_ThPlateIdResult *)pPrm;
+#if 1                
+                            OSA_printf("\n THPLATEIDALG: Process frame, numVeh:%d, sn:%s, cl:%d, er:%d \n",        
+                                            pVehicleAlgrithmResult->nNumberOfVehicle, 
+                                            pVehicleAlgrithmResult->thPlateIdResultAll[0].license, 
+                                            pVehicleAlgrithmResult->thPlateIdResultAll[0].nColor, 
+                                            pVehicleAlgrithmResult->errorRet);         
+#endif
+			}
+			break;
+            
+		default:
+			break;
 	}
 	
 	return 0;
@@ -386,7 +403,10 @@ Int32 Vsys_init(VSYS_PARAMS_S * pContext)
     Vcap_init(NULL);
     Vcam_init(NULL);
     Mjpeg_init(NULL);
-    Vdis_init(NULL);
+    if(gVsysModuleContext.vsysConfig.systemUseCase != VSYS_USECASE_MULTICHN_TRISTREAM_FULLFTR)//added by niqi, cancel display
+    {    
+        Vdis_init(NULL);
+    }
 
     Vdec_init(NULL);
     Venc_init(NULL);
@@ -522,7 +542,8 @@ Int32 Vsys_deConfigureDisplay()
 Int32 Vsys_create()
 {
 	/* Configuring display if application has not done already */
-	if(gVsysModuleContext.vsysConfig.systemUseCase != VSYS_USECASE_MULTICHN_TRISTREAM_LOWPWR) 
+	if((gVsysModuleContext.vsysConfig.systemUseCase != VSYS_USECASE_MULTICHN_TRISTREAM_LOWPWR) 
+           && (gVsysModuleContext.vsysConfig.systemUseCase != VSYS_USECASE_MULTICHN_TRISTREAM_FULLFTR))
 	{
 		Vsys_configureDisplay();
 	}	
@@ -1247,11 +1268,11 @@ Void Vsys_switchFormatSD(Int32 standard)
 			psCamChnDynaParam.sdFormat = standard;
 			Vcam_setDynamicParamChn(1, &psCamChnDynaParam, VCAM_SD_FORMAT);		
 		
-			Vdis_stopDrv(VDIS_DEV_SD);
+			//Vdis_stopDrv(VDIS_DEV_SD);
 
-			Vdis_setResolution(VDIS_DEV_SD, standard);
+			//Vdis_setResolution(VDIS_DEV_SD, standard);
 
-			Vdis_startDrv(VDIS_DEV_SD);
+			//Vdis_startDrv(VDIS_DEV_SD);
 		}
 	}
 }

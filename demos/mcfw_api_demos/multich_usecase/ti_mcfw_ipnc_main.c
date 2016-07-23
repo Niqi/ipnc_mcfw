@@ -315,7 +315,8 @@ Void App_runDemo(Void)
     vsysParams.enableNullSrc        = FALSE;
     vsysParams.numDeis              = 0;
     vsysParams.numSwMs              = 0;
-    if(vsysParams.systemUseCase != VSYS_USECASE_MULTICHN_TRISTREAM_LOWPWR)
+    if((vsysParams.systemUseCase != VSYS_USECASE_MULTICHN_TRISTREAM_LOWPWR)
+        && (vsysParams.systemUseCase != VSYS_USECASE_MULTICHN_TRISTREAM_FULLFTR))
     {
         vsysParams.numDisplays = 2;
     }
@@ -359,7 +360,8 @@ Void App_runDemo(Void)
         }
     }
 
-    if (vsysParams.systemUseCase != VSYS_USECASE_MULTICHN_TRISTREAM_LOWPWR)
+    if ((vsysParams.systemUseCase != VSYS_USECASE_MULTICHN_TRISTREAM_LOWPWR)
+        && (vsysParams.systemUseCase != VSYS_USECASE_MULTICHN_TRISTREAM_FULLFTR))
     {
         Vdis_params_init(&vdisParams);
 
@@ -430,7 +432,8 @@ Void App_runDemo(Void)
     Vsys_datetimeCreate();
 
     /* Start components in reverse order */
-    if (vsysParams.systemUseCase != VSYS_USECASE_MULTICHN_TRISTREAM_LOWPWR)
+    if ((vsysParams.systemUseCase != VSYS_USECASE_MULTICHN_TRISTREAM_LOWPWR)
+        && (vsysParams.systemUseCase != VSYS_USECASE_MULTICHN_TRISTREAM_FULLFTR))
     {
         Vdis_start();
     }
@@ -532,7 +535,8 @@ Void App_stopDemo()
         }
     }
 
-    if (Vsys_getSystemUseCase() != VSYS_USECASE_MULTICHN_TRISTREAM_LOWPWR)
+    if ((Vsys_getSystemUseCase() != VSYS_USECASE_MULTICHN_TRISTREAM_LOWPWR)
+        && (Vsys_getSystemUseCase() != VSYS_USECASE_MULTICHN_TRISTREAM_FULLFTR))
     {
         Vdis_stop();
     }
@@ -556,7 +560,8 @@ Void App_stopDemo()
 
     Vcam_exit();
 
-    if (Vsys_getSystemUseCase() != VSYS_USECASE_MULTICHN_TRISTREAM_LOWPWR)
+    if ((Vsys_getSystemUseCase() != VSYS_USECASE_MULTICHN_TRISTREAM_LOWPWR)
+        && (Vsys_getSystemUseCase() != VSYS_USECASE_MULTICHN_TRISTREAM_FULLFTR))
     {
         Vdis_exit();
     }
@@ -725,11 +730,11 @@ int main(int argc, char **argv)
     gUI_mcfw_config.ldcEnable           = FALSE;
     gUI_mcfw_config.snfEnable           = TRUE;
     gUI_mcfw_config.tnfEnable           = TRUE;
-    gUI_mcfw_config.noisefilterMode     = ISS_VNF_ON;//DSS_VNF_ON;//固定用VNF
+    gUI_mcfw_config.noisefilterMode     = ISS_VNF_ON;
     gUI_mcfw_config.vnfStrength         = NF_STRENGTH_AUTO;
     gUI_mcfw_config.demoUseCase         = FALSE;
     gUI_mcfw_config.vnfUseCase          = FALSE;
-    gUI_mcfw_config.vaUseCase           = TRUE;//FALSE;//其实可以在web上设置,但是IE浏览器打不开web.
+    gUI_mcfw_config.vaUseCase           = FALSE;
     gUI_mcfw_config.n2A_vendor          = UI_AEWB_ID_NONE;
     gUI_mcfw_config.n2A_mode            = UI_AEWB_OFF;
 
