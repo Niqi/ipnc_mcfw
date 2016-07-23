@@ -32,35 +32,36 @@
                             (1920x1080)      (1920x1080)
                             (420SP/422I)      (420SP)
                                 |                |
-                                |                |          (0)
-                   ------DUP_VNF(VPSSM3)   DUP_SCLR(VPSSM3) ---------------
-                   |(1)             |(0)         |(1)                      |  
-                   |                |            |                         |
-                   |                |(422I)      |                         |
-             ISS_NF(VPSSME)   DSS_NF(VPSSM3)  SCLR(VPSSM3)                 |
-                   |                |(420SP)     | (720*480)               |  
-                   |                |            | (420SP)                 | 
-                  MUX_VNF(VPSSM3) --|            |                         |
+                                |                |         
+                   ------DUP_VNF(VPSSM3)---      ---------------------------
+                   |                      |                                |  
+                   |                      |                                |
+                   |                      |                                |
+             ISS_NF(VPSSME)               |----SCLR(VPSSM3)                |
+                   |                             | (720*480)               |  
+                   |                             | (420SP)                 | 
                    |                             |                         |
                    |                             |                         |
-                  DUP_MJPEG(VPSSM3)              |                         |
-                   |   |-------------------------|                         |
+                   |   |--------------------------                         |
                    |   |                                                   |
-                  MUX(VPSSM3)                                     IPC FRAMES OUT(VPSSM3)
-                   |                                                       |
-                   |                                                       |
-                  SWOSD(VPSSM3)                                    IPC FRAMES IN(DSP)
-                   |                                                       |
-                   |                                                       |
-                  DUP_DIS(VPSSM3)                                  VehicleAlgritm(DSP)
-                   |
-                   |
-             IPC OUT(VPSSM3)
-                   |
-                   |
-             IPC IN(VIDEOM3)
-                   |
-                   |
+                   |   |  |-----------------------                         |
+                   |   |  |                      |                         |
+                  MUX(VPSSM3)                    |                IPC FRAMES OUT(VPSSM3)
+                   |                             |                         |
+                   |                             |                         |
+                  SWOSD(VPSSM3)                  |                 IPC FRAMES IN(DSP)
+                   |                             |                         |
+                   |                             |                         |
+                  DUP_DIS(VPSSM3)                |                 VehicleAlgritm(DSP)
+                   |                             |                         |
+				   |                             |                         |
+                   |                             |                IPC FRAMES OUT(DSP)   
+             IPC OUT(VPSSM3)                     |                         |
+                   |                             |                         |
+                   |                             |                 IPC FRAMES IN(VPSS)
+             IPC IN(VIDEOM3)                     |                         |
+                   |                             |                         | 
+                   |                             --------------------------|
               ENC(VIDEOM3)
                    |
                    |
