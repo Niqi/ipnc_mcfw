@@ -23,7 +23,7 @@ static Int32 AlgVehicleLink_createOutObj(AlgVehicleLink_Obj * pObj)
         pOutObj->numAllocPools = 1;
     }
 
-    return (status);
+    return status;
 }
 
 
@@ -95,9 +95,27 @@ Int32 AlgVehicleLink_algProcessData(AlgVehicleLink_Obj * pObj)
             start = Utils_getCurTimeInUsec();
 
             /* THPLATEID ALG */
-            if (0)//(pObj->createArgs.enableThPlateIdAlg)
+            if (pObj->createArgs.enableThPlateIdAlg)
             {
                 status = AlgVehicleLink_ThPlateIdalgProcessData(pAlgObj, pFullFrame, &pObj->outObj[0].bufOutQue);
+
+				if( FVID2_SOK == status)
+				{
+					if(pAlgObj->chObj[0].thPlateIdResult.thPlateIdResultAll[0].nConfidence > 50)
+					{
+						
+				        Vps_printf("\n THPLATEIDALG: Process frame, numVeh:%d, sn:%s, cl:%d, tp:%d, tm:%ld \n", 
+				                        pAlgObj->chObj[0].thPlateIdResult.nNumberOfVehicle, 
+				                        pAlgObj->chObj[0].thPlateIdResult.thPlateIdResultAll[0].license, 
+				                        pAlgObj->chObj[0].thPlateIdResult.thPlateIdResultAll[0].nColor, 
+				                        pAlgObj->chObj[0].thPlateIdResult.thPlateIdResultAll[0].nConfidence,
+				                        (end - start)/1000);			
+					}					
+				}
+				else
+				{
+					Vps_printf("\n THPLATEIDALG: Process fail! \n");
+				}
             }
         
             /* statist process time end */
@@ -109,17 +127,6 @@ Int32 AlgVehicleLink_algProcessData(AlgVehicleLink_Obj * pObj)
             pAlgObj->chObj[0].totalProcessTime += (end - start);
             pAlgObj->chObj[0].processFrCnt ++;
 			pAlgObj->chObj[0].totalFrameCount ++;
-			
-			if(pAlgObj->chObj[0].thPlateIdResult.thPlateIdResultAll[0].nConfidence > 50)
-			{
-				
-		        Vps_printf("\n THPLATEIDALG: Process frame, numVeh:%d, sn:%s, cl:%d, tp:%d, tm:%ld \n", 
-		                        pAlgObj->chObj[0].thPlateIdResult.nNumberOfVehicle, 
-		                        pAlgObj->chObj[0].thPlateIdResult.thPlateIdResultAll[0].license, 
-		                        pAlgObj->chObj[0].thPlateIdResult.thPlateIdResultAll[0].nColor, 
-		                        pAlgObj->chObj[0].thPlateIdResult.thPlateIdResultAll[0].nConfidence,
-		                        (end - start)/1000);			
-			}
 
             if(pAlgObj->chObj[0].processFrCnt >= 200)
             {
@@ -142,7 +149,7 @@ Int32 AlgVehicleLink_algProcessData(AlgVehicleLink_Obj * pObj)
 	    System_sendLinkCmd(pObj->createArgs.outQueParams.nextLink, SYSTEM_CMD_NEW_DATA);
 	}	
         
-    return status;
+    return FVID2_SOK;
 }
 
 

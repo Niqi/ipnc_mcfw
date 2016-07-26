@@ -16,10 +16,10 @@ extern "C" {
 #include <mcfw/interfaces/link_api/algVehicleLink.h>
 #include <mcfw/src_bios6/links_c6xdsp/algVehicle_link/thPlateId/thPlateIdLink_priv.h>
 
-#define ALG_NO_PROCESS
+//#define ALG_NO_PROCESS
 
 #define ALGVEHICLE_LINK_OBJ_MAX                     (SYSTEM_LINK_ID_ALGVEHICLE_COUNT)
-#define ALGVEHICLE_LINK_MAX_OUT_FRAMES      		(SYSTEM_LINK_FRAMES_PER_CH)
+#define ALGVEHICLE_LINK_MAX_OUT_FRAMES      		(SYSTEM_LINK_FRAMES_PER_CH*2)
 #define ALGVEHICLE_LINK_EDMA3_QUEUE_ID_0			(0)
 #define ALGVEHICLE_LINK_EDMA3_QUEUE_ID_1			(1)
 

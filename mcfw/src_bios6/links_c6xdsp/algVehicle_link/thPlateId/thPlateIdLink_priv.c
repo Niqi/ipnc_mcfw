@@ -280,10 +280,10 @@ Int32 AlgVehicleLink_ThPlateIdalgProcessData(AlgVehicleLink_ThPlateIdObj * pObj,
 				  Utils_getCurTimeInMsec(), chanID );
 #endif
 
-		return FVID2_SOK;
+		return FVID2_EFAIL;
 	}
 
-	return FVID2_EFAIL;
+	return FVID2_SOK;
 
 }
 
