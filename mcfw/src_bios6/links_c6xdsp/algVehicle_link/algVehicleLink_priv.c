@@ -91,13 +91,16 @@ Int32 AlgVehicleLink_algProcessData(AlgVehicleLink_Obj * pObj)
 
         if ((status == FVID2_SOK) && (pFullFrame != NULL))
         {
-            /* statist process time start */
-            start = Utils_getCurTimeInUsec();
-
             /* THPLATEID ALG */
             if (pObj->createArgs.enableThPlateIdAlg)
             {
+	            /* statist process time start */
+	            start = Utils_getCurTimeInUsec();  
+				
                 status = AlgVehicleLink_ThPlateIdalgProcessData(pAlgObj, pFullFrame, &pObj->outObj[0].bufOutQue);
+				
+	            /* statist process time end */
+	            end = Utils_getCurTimeInUsec();				
 
 				if( FVID2_SOK == status)
 				{
@@ -118,8 +121,6 @@ Int32 AlgVehicleLink_algProcessData(AlgVehicleLink_Obj * pObj)
 				}
             }
         
-            /* statist process time end */
-            end = Utils_getCurTimeInUsec();
             if((end - start) > pAlgObj->chObj[0].maxProcessTime)
             {
                 pAlgObj->chObj[0].maxProcessTime = (end - start);
