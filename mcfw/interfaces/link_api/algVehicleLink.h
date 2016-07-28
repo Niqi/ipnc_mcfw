@@ -264,10 +264,10 @@ static inline void AlgVehicleLink_CreateParams_Init(AlgVehicleLink_CreateParams 
     pPrm->thPlateIdCreateParams.chDefaultParams[0].pnMinFreeSDRAM = 0;
     pPrm->thPlateIdCreateParams.chDefaultParams[0].pnMinFreeSRAM = 0;
    
-    pPrm->thPlateIdCreateParams.chDefaultParams[0].rcDetect.top = 300;
-    pPrm->thPlateIdCreateParams.chDefaultParams[0].rcDetect.bottom = 1080 - 300;
-    pPrm->thPlateIdCreateParams.chDefaultParams[0].rcDetect.left = 300;
-    pPrm->thPlateIdCreateParams.chDefaultParams[0].rcDetect.right = 1920 - 300;
+    pPrm->thPlateIdCreateParams.chDefaultParams[0].rcDetect.top = 50;
+    pPrm->thPlateIdCreateParams.chDefaultParams[0].rcDetect.bottom = 1080 - 50;
+    pPrm->thPlateIdCreateParams.chDefaultParams[0].rcDetect.left = 50;
+    pPrm->thPlateIdCreateParams.chDefaultParams[0].rcDetect.right = 1920 - 50;
 
     pPrm->thPlateIdCreateParams.numBufPerCh = 1 ;
     pPrm->thPlateIdCreateParams.numValidChForTHPLATEID = 1;

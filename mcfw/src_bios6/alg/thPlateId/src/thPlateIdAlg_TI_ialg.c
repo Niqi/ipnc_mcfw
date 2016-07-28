@@ -313,7 +313,7 @@ THPLATEIDALG_TI_process(void        *handle,
         ECPY_deactivate(obj->ecpyHandle[THPLATEIDALG_DMA_CH_ALP]);    
     }
 #if 0
-    Cache_inv((Ptr)thPlateIdAlgChParams->curFrame,
+    Cache_inv(pFrameBufY,
                     (thPlateIdAlgChParams->width * thPlateIdAlgChParams->height * 3 /2),
                     Cache_Type_ALL, TRUE);    
 #endif
@@ -329,6 +329,10 @@ THPLATEIDALG_TI_process(void        *handle,
     pThPlateIdResult->errorRet = recRet;
     pThPlateIdResult->nNumberOfVehicle= nNumberOfVehicle;
 
+	if(TH_ERR_NONE != recRet)
+	{
+		status = THPLATEID_ERR_INTERNAL_FAILURE;
+	}
 
     return status;
 }
