@@ -36,6 +36,7 @@ SRCS_m3vpss += cameraLink_tsk.c cameraLink_drv.c \
 			   fdLink_tsk.c \
 			   ti_facedetect.c \
 			   swosdLink_tsk.c \
+			   osd.c \
 			   vnfLink_tsk.c vnfLink_drv.c vnfLink_vnf.c \
 			   glbceLink_tsk.c glbceLink_drv.c glbceLink_glbce.c glbceLink_movAvg.c \
 			   wdrLink_tsk.c wdrLink_drv.c \

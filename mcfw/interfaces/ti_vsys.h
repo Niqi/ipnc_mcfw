@@ -44,6 +44,31 @@ extern "C" {
  * Enums
  * =============================================================================
  */
+typedef struct TagOSD_Char_sys {
+	Int32   rows;
+	Int32   width;
+	Int32   pitch;
+	Int8  	buffer[45*45];
+	Int8  	pixel_mode;
+	Int8  	len;
+	Int8  	bmp_num;
+	Int8  	text_len;
+	Int8  	flag;
+	Int32   bitmap_left;
+	Int32   bitmap_top;
+	Long  	advance_x;
+	Long  	advance_y;
+	Int32 	textPosX;
+	Int32 	textPosY;
+	Int32 	fontsize;
+	Int32 	ackNum;
+}TOSD_Char_sys;
+
+typedef enum {
+	VSYS_OSD_DATETIME_BMP,
+	VSYS_OSD_AUX_DATETIME_BMP,
+	VSYS_OSD_LPRINFO_BMP
+} VSYS_SWOSD_SETBMP;
 
 
 /**
@@ -334,9 +359,11 @@ typedef struct {
     UInt32 timePos;
     /**< Time position */
 
-	UInt32 histEnable;
-    /**< Histogram Enable */
+    UInt32 histEnable;
+    /**< Histogram Enable */	
 
+    UInt32 osd_bmp_num;
+    TOSD_Char_sys *bmp;
 } Vsys_swOsdPrm;
 
 typedef enum {
@@ -815,6 +842,8 @@ Int32 Vsys_setDupDelayPrm(UInt32 linkId,UInt32 queueId,UInt32 syncQueueId);
  *       ERROR_CODE         --  refer for err defination
  */
 Int32 Vsys_setNoiseFilter(UInt32 channelId,UI_NF_MODE noisefilterMode); 
+
+Int32 Vsys_setSwOsdBmp(VSYS_SWOSD_SETBMP swOsdSetPrm,Vsys_swOsdPrm **ppSwOsdPrm);
 
 #ifdef __cplusplus
 }

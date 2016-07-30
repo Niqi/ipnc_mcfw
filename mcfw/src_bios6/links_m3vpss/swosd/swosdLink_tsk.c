@@ -12,7 +12,7 @@
  * ===================================================================*/
 
 #include "swosdLink_priv.h"
-
+#include "osd.h"
 #pragma DATA_ALIGN(gSwosdLink_tskStack, 32)
 #pragma DATA_SECTION(gSwosdLink_tskStack, ".bss:taskStackSection")
 UInt8 gSwosdLink_tskStack[SWOSD_LINK_OBJ_MAX][SWOSD_LINK_TSK_STACK_SIZE];
@@ -26,6 +26,309 @@ int isIMXbasedSWOSDtoBeCalled = 0;
 int isTransparencyEnabled[3] = { 0, 0, 0};
 extern Semaphore_Handle cpisSync;
 extern int isCPIS_GLBCE_deleted;
+
+
+TOsd_Global_Info g_osd_total_info;
+
+void SwosdLink_EmptyGlobalInfo(void)
+{
+	g_osd_total_info.osdType = OSD_INVAL_TYPE;
+	g_osd_total_info.recvFinishFlag = 0;
+	g_osd_total_info.bmpTimeInfo = NULL;
+	g_osd_total_info.auxBmpTimeInfo = NULL;
+	g_osd_total_info.thirdChannelBmpInfo = NULL;
+	g_osd_total_info.osdInfo = NULL;
+	g_osd_total_info.auxOsdInfo = NULL;
+
+	g_osd_total_info.timeInfo[0] = 0;
+	g_osd_total_info.timeInfo[1] = 0;
+	g_osd_total_info.timeInfo[2] = 0;
+	g_osd_total_info.timeInfo[3] = 0;
+	g_osd_total_info.timeInfo[4] = 0;
+	g_osd_total_info.timeInfo[5] = 0;
+	g_osd_total_info.timeInfo[6] = 0;
+}
+
+void SwosdLink_FreeGlobalInfo(void)
+{
+	if (NULL != g_osd_total_info.thirdChannelBmpInfo)
+	{
+		free(g_osd_total_info.thirdChannelBmpInfo);
+	}
+	if (NULL != g_osd_total_info.auxBmpTimeInfo)
+	{
+		free(g_osd_total_info.auxBmpTimeInfo);
+	}
+
+	if (NULL != g_osd_total_info.bmpTimeInfo)
+	{
+		free(g_osd_total_info.bmpTimeInfo);
+	}
+
+	if (NULL != g_osd_total_info.osdInfo)
+	{
+		free(g_osd_total_info.osdInfo);
+	}
+
+	if (NULL != g_osd_total_info.auxOsdInfo)
+	{
+		free(g_osd_total_info.auxOsdInfo);
+	}
+}
+
+
+
+void SwosdLink_EmptyOSDStruct(TSWOSD_Char *osd_info)
+{
+	osd_info->rows		  = 0;
+	osd_info->width		  = 0;
+	osd_info->pitch		  = 0;
+	osd_info->pixel_mode  = 0;
+	osd_info->bitmap_left = 0;
+	osd_info->bitmap_top  = 0;
+	osd_info->advance_x	  = 0;
+	osd_info->advance_y	  = 0;
+	osd_info->text_len	  = 0;
+	osd_info->len		  = 0;
+	osd_info->textPosX	  = 0;
+	osd_info->textPosY	  = 0;
+	osd_info->flag		  = 0;
+	osd_info->ackNum 	  = 0;
+	osd_info->bmp_num	  = 0;
+	osd_info->fontsize	  = 0;
+
+	memset(osd_info->buffer, 0, 45 * 45);
+}
+int SwosdLink_GetRecvFinishFlag(void)
+{
+    return g_osd_total_info.recvFinishFlag;
+}
+
+void SwosdLink_SetRecvFinishFlag(int flag)
+{
+    g_osd_total_info.recvFinishFlag = flag;
+}
+
+TSWOSD_Char *SwosdLink_GetBmpTimeInfo(void)
+{
+    return g_osd_total_info.bmpTimeInfo;
+}
+void SwosdLink_SetBmpTimeInfo(TSWOSD_Char * bmpTimeInfo)
+{
+    g_osd_total_info.bmpTimeInfo = bmpTimeInfo;
+}
+TSWOSD_Char *SwosdLink_GetAUXBmpTimeInfo(void)
+{
+    return g_osd_total_info.auxBmpTimeInfo;
+}
+void SwosdLink_SetAUXBmpTimeInfo(TSWOSD_Char * auxBmpTimeInfo)
+{
+    g_osd_total_info.auxBmpTimeInfo = auxBmpTimeInfo;
+}
+TSWOSD_Char *SwosdLink_GetThirdChannelBmpInfo(void)
+{
+    return g_osd_total_info.thirdChannelBmpInfo;
+}
+void SwosdLink_SetThirdChannelBmpInfo(TSWOSD_Char * thridChannelBmpInfo)
+{
+    g_osd_total_info.thirdChannelBmpInfo = thridChannelBmpInfo;
+}
+
+TSWOSD_Char *SwosdLink_GetOsdInfo(void)
+{
+    return g_osd_total_info.osdInfo;
+}
+
+void SwosdLink_SetOsdInfo(TSWOSD_Char * osdInfo)
+{
+    g_osd_total_info.osdInfo = osdInfo;
+}
+
+TSWOSD_Char *SwosdLink_GetAuxOsdInfo(void)
+{
+    return g_osd_total_info.auxOsdInfo;
+}
+
+void SwosdLink_SetAuxOsdInfo(TSWOSD_Char * auxOsdInfo)
+{
+	g_osd_total_info.auxOsdInfo = auxOsdInfo;
+}
+
+unsigned int *SwosdLink_GetTimeInfo(int *num)
+{
+	*num = 7;
+    return &(g_osd_total_info.timeInfo[0]);
+}
+
+void SwosdLink_SetTimeInfoByCmd(TSWOSD_Char *save_time_info, UInt32 cmd)
+{
+	switch (cmd)
+	{
+		case SWOSDLINK_SETBMP_DATETIME:
+			SwosdLink_SetBmpTimeInfo(save_time_info);
+			break;
+		case SWOSDLINK_SETBMP_AUX_DATETIME:
+			SwosdLink_SetAUXBmpTimeInfo(save_time_info);
+			break;
+		case SWOSDLINK_SETBMP_LPRINFO:
+			SwosdLink_SetThirdChannelBmpInfo(save_time_info);
+			break;
+		default:
+			break;
+	}
+}
+
+TSWOSD_Char *SwosdLink_GetTimeInfoByCmd(UInt32 cmd)
+{
+	TSWOSD_Char *save_time_info = NULL;
+
+	switch (cmd)
+	{
+		case SWOSDLINK_SETBMP_DATETIME:
+			save_time_info = SwosdLink_GetBmpTimeInfo();
+			break;
+		case SWOSDLINK_SETBMP_AUX_DATETIME:
+			save_time_info = SwosdLink_GetAUXBmpTimeInfo();
+			break;
+		case SWOSDLINK_SETBMP_LPRINFO:
+			save_time_info = SwosdLink_GetThirdChannelBmpInfo();
+			break;
+		default:
+			Vps_printf("SwosdLink_SaveTimeInfo cmd type error!! cmd: %d\n", cmd);
+			return NULL;
+	}
+
+	return save_time_info;
+}
+
+void SwosdLink_CopyOsdStruct(TSWOSD_Char *dst_Osd, TSWOSD_Char *src_Osd)
+{
+	int aux_bufsiz = 0;
+
+	dst_Osd->rows		 = src_Osd->rows;
+	dst_Osd->width		 = src_Osd->width;
+	dst_Osd->pitch		 = src_Osd->pitch;
+	dst_Osd->pixel_mode  = src_Osd->pixel_mode;
+	dst_Osd->bitmap_left = src_Osd->bitmap_left;
+	dst_Osd->bitmap_top  = src_Osd->bitmap_top;
+	dst_Osd->advance_x	 = src_Osd->advance_x;
+	dst_Osd->advance_y	 = src_Osd->advance_y;
+	dst_Osd->text_len	 = src_Osd->text_len;
+	dst_Osd->len		 = src_Osd->len;
+	dst_Osd->bmp_num	 = src_Osd->bmp_num;
+	dst_Osd->flag		 = src_Osd->flag;
+	dst_Osd->ackNum 	 = src_Osd->ackNum;
+	dst_Osd->textPosX	 = src_Osd->textPosX;
+	dst_Osd->textPosY 	 = src_Osd->textPosY;
+	dst_Osd->fontsize	 = src_Osd->fontsize;
+
+	aux_bufsiz = src_Osd->rows * src_Osd->pitch;
+	memcpy(dst_Osd->buffer, src_Osd->buffer, aux_bufsiz);
+}
+
+void SwosdLink_CopyOsdInfoMem(TSWOSD_Char *dst_Osd, TSWOSD_Char *src_Osd, int size)
+{
+	int loop = 0;
+	TSWOSD_Char *dst_ptr = (TSWOSD_Char *)dst_Osd;
+	TSWOSD_Char *src_ptr = (TSWOSD_Char *)src_Osd;
+
+	while (loop < size)
+	{
+		SwosdLink_CopyOsdStruct(dst_ptr, src_ptr);
+
+		dst_ptr++;
+		src_ptr++;
+		loop++;
+	}
+}
+
+Int32 SwosdLink_SaveTimeInfo(Utils_MsgHndl *pMsg, UInt32 cmd)
+{
+	TSWOSD_Char *msg_time_info = NULL;
+	TSWOSD_Char *save_time_info = NULL;
+	UInt32 osdBmpNum = 0;
+	msg_time_info = (TSWOSD_Char *)Utils_msgGetPrm(pMsg);
+	if(NULL == msg_time_info)
+	{
+		Vps_printf("SwosdLink_SaveTimeInfo ERROR: msg_time_info is NULL\n");
+		return FVID2_EALLOC;
+	}
+
+	osdBmpNum = msg_time_info->len;
+	save_time_info = SwosdLink_GetTimeInfoByCmd(cmd);
+	if ((NULL != save_time_info) && (osdBmpNum != save_time_info->len))
+	{
+		free(save_time_info);
+		SwosdLink_SetTimeInfoByCmd(NULL, cmd);
+
+		save_time_info = (TSWOSD_Char *)calloc(osdBmpNum, sizeof(TSWOSD_Char));
+	}
+	else if (NULL == save_time_info)
+	{
+		save_time_info = (TSWOSD_Char *)calloc(osdBmpNum, sizeof(TSWOSD_Char));
+	}
+	else
+	{
+		SwosdLink_EmptyOSDStruct(save_time_info);
+	}
+
+	if (NULL == save_time_info)
+	{
+		Vps_printf("SwosdLink_SaveTimeInfo ERROR: calloc save_time_info fail!\n");
+		return FVID2_EFAIL;
+	}
+	SwosdLink_SetTimeInfoByCmd(save_time_info, cmd);
+
+	/* 一次性接收BMP并保存到内存中 */
+	SwosdLink_CopyOsdInfoMem(save_time_info, msg_time_info, osdBmpNum);
+	return FVID2_SOK;
+}
+
+void SwosdLink_auxSetOsdTime(FVID2_Frame *pFrame,int Width, int Height)
+{
+	TSWOSD_Char *displayInfo = NULL;
+	int num = 0;
+	if (0 == pFrame->channelNum){
+	    displayInfo = SwosdLink_GetBmpTimeInfo();
+	}
+	else if (1 == pFrame->channelNum){
+	    displayInfo = SwosdLink_GetAUXBmpTimeInfo();
+	}
+	else if (2 == pFrame->channelNum){
+		displayInfo = SwosdLink_GetThirdChannelBmpInfo();
+	}
+	if ((NULL != displayInfo) && (1 == displayInfo->flag))
+	{
+		if(2 != pFrame->channelNum){
+			if (22 > displayInfo->len){
+				Vps_printf("SwosdLink_auxSetOsdTime: ERROR!! Time info length error, len: %d.!!!\n", displayInfo->len);
+				return;
+			}
+			if (0 == pFrame->channelNum){
+				displayInfo->textPosX = 0;
+				displayInfo->textPosY = 0;
+				Width = 1952;
+				OSD_time_show(pFrame->channelNum, SwosdLink_GetTimeInfo(&num), displayInfo, displayInfo->textPosX,
+					displayInfo->textPosY, (unsigned char *)pFrame->addr[0][0],Width,Height,displayInfo->fontsize);
+			}
+			else if (1 == pFrame->channelNum){
+				displayInfo->textPosX = 0;
+				displayInfo->textPosY = 0;
+				Width = 736;
+				OSD_time_show(pFrame->channelNum, SwosdLink_GetTimeInfo(&num), displayInfo, displayInfo->textPosX,
+					displayInfo->textPosY, (unsigned char *)pFrame->addr[0][0],Width,Height,displayInfo->fontsize);
+			}
+		}
+		else {
+			displayInfo->textPosX = 0;
+			displayInfo->textPosY = 0;
+			Width = 1920;
+			OSD_textShow(displayInfo->textPosX,displayInfo->textPosY, displayInfo,
+				(unsigned char *)pFrame->addr[0][0],Width,Height);
+		}
+	}
+}
+
 
 Int32 Swosd_drvPrintRtStatus(SwosdLink_Obj * pObj)
 {
@@ -197,6 +500,9 @@ Int32 SwosdLink_create(SwosdLink_Obj * pObj, SwosdLink_CreateParams * pPrm)
     pObj->minLatency = 0xFF;
     pObj->maxLatency = 0;
 
+	/* 初始化全局变量 */
+	SwosdLink_EmptyGlobalInfo();
+
 #ifdef SYSTEM_DEBUG_SWOSD
     Vps_printf(" %d: SWOSD   : Create Done !!!\n", Clock_getTicks());
 #endif
@@ -356,8 +662,11 @@ Int32 SwosdLink_processFrames(SwosdLink_Obj * pObj)
 										   (Int32) fullFrameAddrY,	  			// Y plane
 										   (Int32) fullFrameAddrUV, 			// UV plane
 										   (Int32*) histData);
-            }									   
-			
+            }
+
+			/* show current time */
+			SwosdLink_auxSetOsdTime(pFullFrame,Width, Height);
+
 			latency = Utils_getCurTimeInMsec() - pFullFrame->timeStamp;
 			if(latency>pObj->maxLatency)
 				pObj->maxLatency = latency;
@@ -513,6 +822,7 @@ Void SwosdLink_tskMain(struct Utils_TskHndl * pTsk, Utils_MsgHndl * pMsg)
             case SYSTEM_CMD_DELETE:
                 done = TRUE;
                 ackMsg = TRUE;
+				SwosdLink_FreeGlobalInfo();
                 break;
 
             case SYSTEM_CMD_NEW_DATA:
@@ -591,19 +901,12 @@ Void SwosdLink_tskMain(struct Utils_TskHndl * pTsk, Utils_MsgHndl * pMsg)
 
             case SWOSDLINK_CMD_DATETIME:
                 pDateTimePrm = (SwosdLink_dateTime *) Utils_msgGetPrm(pMsg);
-
-                dateTimePrm[0] = pDateTimePrm->year;
-                dateTimePrm[1] = pDateTimePrm->month;
-                dateTimePrm[2] = pDateTimePrm->day;
-                dateTimePrm[3] = pDateTimePrm->hour;
-                dateTimePrm[4] = pDateTimePrm->min;
-                dateTimePrm[5] = pDateTimePrm->sec;
-
-				for (streamId = 0; streamId <  pObj->inQueInfo.numCh; streamId++)
-				{
-                	DM81XX_SWOSD_setDateTime(streamId, (Int32 *) dateTimePrm);
-				}
-
+				g_osd_total_info.timeInfo[0] = pDateTimePrm->year;
+				g_osd_total_info.timeInfo[1] = pDateTimePrm->month;
+				g_osd_total_info.timeInfo[2] = pDateTimePrm->day;
+				g_osd_total_info.timeInfo[3] = pDateTimePrm->hour;
+				g_osd_total_info.timeInfo[4] = pDateTimePrm->min;
+				g_osd_total_info.timeInfo[5] = pDateTimePrm->sec;
                 Utils_tskAckOrFreeMsg(pMsg, status);
                 break;
 
@@ -627,8 +930,19 @@ Void SwosdLink_tskMain(struct Utils_TskHndl * pTsk, Utils_MsgHndl * pMsg)
 				}
 				
 				Utils_tskAckOrFreeMsg(pMsg, status);
-                break;			
-				
+                break;
+			case SWOSDLINK_SETBMP_DATETIME:
+				SwosdLink_SaveTimeInfo(pMsg, cmd);
+				Utils_tskAckOrFreeMsg(pMsg, status);
+				break;
+			case SWOSDLINK_SETBMP_AUX_DATETIME:
+				SwosdLink_SaveTimeInfo(pMsg, cmd);
+				Utils_tskAckOrFreeMsg(pMsg, status);
+				break;
+			case SWOSDLINK_SETBMP_LPRINFO:
+				SwosdLink_SaveTimeInfo(pMsg, cmd);
+				Utils_tskAckOrFreeMsg(pMsg, status);
+				break;
             default:
                 Utils_tskAckOrFreeMsg(pMsg, status);
                 break;

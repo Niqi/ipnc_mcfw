@@ -9,6 +9,7 @@ multich_mcfw:
 	make -fMAKEFILE.MK -C$(MCFW_ROOT_PATH)/demos/mcfw_api_demos/multich_usecase MODULE=ipnc_rdk_mcfw $(TARGET)
 	make -fMAKEFILE.MK -C$(MCFW_ROOT_PATH)/demos/mcfw_api_demos/stream MODULE=ipnc_rdk_mcfw $(TARGET)
 	make -fMAKEFILE.MK -C$(MCFW_ROOT_PATH)/demos/mcfw_api_demos/itt MODULE=ipnc_rdk_mcfw $(TARGET)
+	make -fMAKEFILE.MK -C$(MCFW_ROOT_PATH)/demos/mcfw_api_demos/osd MODULE=ipnc_rdk_mcfw $(TARGET)
 
 libs: multich_mcfw 
 

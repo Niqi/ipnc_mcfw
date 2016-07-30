@@ -48,6 +48,31 @@ extern "C" {
 #define SWOSDLINK_CMD_VASTRING			(0x8007)
 #define SWOSDLINK_CMD_HISTENABLE		(0x8008)
 
+#define SWOSDLINK_SETBMP_DATETIME		(0x800b)
+#define SWOSDLINK_SETBMP_AUX_DATETIME	(0x800c)
+#define SWOSDLINK_SETBMP_LPRINFO		(0x800d)
+
+/* 不使用链表的方式保存，以确保只用发送一次 */
+typedef struct TagOSD_Char_Swosd{
+    Int32   rows;
+    Int32   width;
+    Int32   pitch;
+    Int8  buffer[45*45];
+    Int8  pixel_mode;
+    Int8  len;
+    Int8  bmp_num;
+    Int8  text_len;
+    Int8  flag;
+    Int32   bitmap_left;
+    Int32   bitmap_top;
+    Long  advance_x;
+    Long  advance_y;
+    Int32 textPosX;
+    Int32 textPosY;
+    Int32 fontsize;
+    UInt32 ackNum;
+}TOSD_Char_Swosd;
+
 
 /**
     \brief Swosd link create parameters
@@ -122,6 +147,7 @@ typedef struct {
     UInt32 histEnable;
     /**< Histogram Enable */
 	
+    TOSD_Char_Swosd *bmp;
 } SwosdLink_GuiParams;
 
 /**

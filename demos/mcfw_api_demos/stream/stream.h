@@ -24,7 +24,7 @@ extern "C" {
 #include <cache_mng.h>
 #include <gop_lock.h>
 #include <semaphore_util.h>
-
+#include <osa.h>
 #ifdef MEMORY_256MB
 #define STREAM_BUF_MEM_SIZE 	(0x01E00000)
 #else
@@ -136,6 +136,9 @@ enum {
 	STREAM_FEATURE_SET_CAMERA_RES,
 	
 	STREAM_FEATURE_SET_CAMERA_CODECCFG,
+
+	STREAM_FEATURE_AUX_DATETIMEPRM,
+	STREAM_FEATURE_LPRINFOPRM,
 
     STREAM_FEATURE_NUM
 };
@@ -260,6 +263,8 @@ int stream_end(STREAM_PARM * pParm);
 
 int App_msgHandlerInit(STREAM_PARM *pParm);
 int App_msgHandlerExit(STREAM_PARM *pParm);
+
+Int32 HalCodecSetOsdDisplayTime(UInt8 u8Enable, UInt32 u32X, UInt32 u32Y);
 
 #ifdef __cplusplus
 }

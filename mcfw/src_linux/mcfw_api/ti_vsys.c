@@ -1603,3 +1603,72 @@ Int32 Vsys_setNoiseFilter(UInt32 channelId,UI_NF_MODE noisefilterMode)
 	return ERROR_NONE;
 }
 
+
+Int32 Vsys_setSwOsdBmp(VSYS_SWOSD_SETBMP swOsdSetPrm,Vsys_swOsdPrm **ppSwOsdPrm)
+{
+	SwosdLink_GuiParams swOsdGuiPrm_datetime,swOsdGuiPrm_aux_datetime;
+
+	switch (swOsdSetPrm)
+	{
+		case VSYS_OSD_DATETIME_BMP:
+			swOsdGuiPrm_datetime.bmp = (TOSD_Char_Swosd *)(*ppSwOsdPrm)->bmp;
+			if(swOsdGuiPrm_datetime.bmp == NULL){
+				OSA_ERROR("swOsdGuiPrm_datetime.bmp == NULL!\n");
+				return OSA_EFAIL;
+			}
+			if (gVsysModuleContext.swOsdId != SYSTEM_LINK_ID_INVALID){
+				System_linkControl(gVsysModuleContext.swOsdId,
+								   SWOSDLINK_SETBMP_DATETIME,
+								   swOsdGuiPrm_datetime.bmp,
+								   sizeof(TOSD_Char_Swosd) * (*ppSwOsdPrm)->osd_bmp_num,
+								   TRUE);
+
+			}
+			free(swOsdGuiPrm_datetime.bmp);
+			swOsdGuiPrm_datetime.bmp = NULL;
+			free(*ppSwOsdPrm);
+			*ppSwOsdPrm = NULL;
+			break;
+		case VSYS_OSD_AUX_DATETIME_BMP:
+			swOsdGuiPrm_aux_datetime.bmp = (TOSD_Char_Swosd *)(*ppSwOsdPrm)->bmp;
+			if(swOsdGuiPrm_aux_datetime.bmp == NULL){
+				OSA_ERROR("swOsdGuiPrm_aux_datetime.bmp == NULL!\n");
+				return OSA_EFAIL;
+			}
+			if (gVsysModuleContext.swOsdId != SYSTEM_LINK_ID_INVALID){
+				System_linkControl(gVsysModuleContext.swOsdId,
+							   SWOSDLINK_SETBMP_AUX_DATETIME,
+							   swOsdGuiPrm_aux_datetime.bmp,
+						   	   sizeof(TOSD_Char_Swosd) * (*ppSwOsdPrm)->osd_bmp_num,
+							   TRUE);
+			}
+	    	free(swOsdGuiPrm_aux_datetime.bmp);
+			swOsdGuiPrm_aux_datetime.bmp = NULL;
+			free(*ppSwOsdPrm);
+			*ppSwOsdPrm = NULL;
+			break;
+		case VSYS_OSD_LPRINFO_BMP:
+			swOsdGuiPrm_aux_datetime.bmp = (TOSD_Char_Swosd *)(*ppSwOsdPrm)->bmp;
+			if(swOsdGuiPrm_aux_datetime.bmp == NULL){
+				OSA_ERROR("swOsdGuiPrm_aux_datetime.bmp == NULL!\n");
+				return OSA_EFAIL;
+			}
+			if (gVsysModuleContext.swOsdId != SYSTEM_LINK_ID_INVALID){
+				System_linkControl(gVsysModuleContext.swOsdId,
+							   SWOSDLINK_SETBMP_LPRINFO,
+							   swOsdGuiPrm_aux_datetime.bmp,
+						   	   sizeof(TOSD_Char_Swosd) * (*ppSwOsdPrm)->osd_bmp_num,
+							   TRUE);
+			}
+	    	free(swOsdGuiPrm_aux_datetime.bmp);
+			swOsdGuiPrm_aux_datetime.bmp = NULL;
+			free(*ppSwOsdPrm);
+			*ppSwOsdPrm = NULL;
+			break;
+		default:
+			break;
+	}
+
+	return OSA_SOK;
+}
+

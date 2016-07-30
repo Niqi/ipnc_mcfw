@@ -25,6 +25,44 @@ extern "C" {
 
 #define SWOSD_LINK_OBJ_MAX			(1)
 
+typedef struct TagSWOSD_Char {
+    Int32   rows;
+    Int32   width;
+    Int32   pitch;
+    Int8  	buffer[45*45];
+    Int8  	pixel_mode;
+    Int8  	len;
+    Int8  	bmp_num;
+    Int8  	text_len;
+    Int8  	flag;
+    Int32   bitmap_left;
+    Int32   bitmap_top;
+    Long  advance_x;
+    Long  advance_y;
+    Int32 textPosX;
+    Int32 textPosY;
+    Int32 fontsize;
+    UInt32 ackNum;
+}TSWOSD_Char;
+
+typedef enum
+{
+	OSD_BMP_TYPE,		/* bmp类型 */
+	OSD_AUX_TYPE,		/* 抓拍bmp类型 */
+	OSD_INVAL_TYPE		/* 无效类型 */
+}EOsd_Type;
+
+typedef struct osd_Bmp_Global_Info_s {
+	EOsd_Type   osdType;
+	Int32       recvFinishFlag;				/* 接收完成标志 */
+	UInt32  	timeInfo[7];				/* 数字时间信息 */
+	TSWOSD_Char *bmpTimeInfo;					/* bmp时间信息 */
+	TSWOSD_Char *auxBmpTimeInfo;
+	TSWOSD_Char *thirdChannelBmpInfo;
+	TSWOSD_Char *osdInfo;					/* 主码流字符串图片信息 */
+	TSWOSD_Char *auxOsdInfo;				/* 最后保存的辅码流的图片信息指针 */
+}TOsd_Global_Info;
+
 typedef struct {
     Utils_TskHndl tsk;
     SwosdLink_CreateParams createArgs;

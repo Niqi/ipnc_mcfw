@@ -31,6 +31,7 @@
 #include <mcfw/interfaces/link_api/vaLink.h>
 #include <mcfw/interfaces/link_api/system_const.h>
 #include <cmem.h>
+#include <str2bmp.h>
 
 //#define DYN_CODEC_CHANGE
 
@@ -138,6 +139,159 @@ void stream_feature_setup(int nFeature, void *pParm);
 
 /* extern */ AEW_EXT_PARAM Aew_ext_parameter;
 
+static Int32 GetStrToBmpNum(const Int8 *str, Int32 len, Int32 *num)
+{
+	UInt8 *sbuf;
+	Int32 loop = 0;
+	Int32 cnt = 0;
+	sbuf = (UInt8 *)str;
+
+	if(0 == len || 128 < len){
+		OSA_ERROR("string len is invalid, len: %d!\n", len);
+		*num = 0;
+		return OSA_EFAIL;
+	}
+
+	while(loop < len){
+		if((sbuf[loop] < 128)){
+			loop += 1;
+			cnt += 1;
+		}
+		else{
+			loop += 2;
+			cnt += 1;
+		}
+	}
+	if (MAX_OSD_BMP_NUM < cnt){
+		OSA_printf("BMP number is overload, len: %d!\n", cnt);
+		return OSA_EFAIL;
+	}
+	*num = cnt;
+
+	return OSA_SOK;
+}
+
+Int32 HalCodecSetOsdDisplayTime(UInt8 u8Enable, UInt32 u32X, UInt32 u32Y)
+{
+	Int32 Int32Ret = FAILURE;
+	Int32 strBmpNum = 0;
+	Int32 Int32X,Int32Y;
+	TOSDPrm g_atOSDprm_datetime;
+	static const Int8 datetime[] ={0x20,0x3a,0x30,0x31,0x32,0x33,0x34,0x35,0x36,
+		0x37,0x38,0x39,0x2f,0x2d,0xc4,0xea,0xd4,0xc2,0xc8,0xd5,0xca,0xb1,0xb7,0xd6,
+		0xc3,0xeb,0xd0,0xc7,0xc6,0xda,0xc8,0xd5,0xd2,0xbb,0xb6,0xfe,0xc8,0xfd,0xcb,
+		0xc4,0xce,0xe5,0xc1,0xf9};
+
+    OSA_printf("HalCodecSetOsdDisplayTime: u8Enable = %d u32X = %d u32Y = %d\n\n",u8Enable, u32X, u32Y);
+
+    Int32X = (Int32)u32X;
+    Int32Y = (Int32)u32Y;
+
+	if (OSA_SOK != GetStrToBmpNum(datetime, sizeof(datetime), &strBmpNum)){
+		OSA_ERROR("HalCodecSetOsdDisplayTime GetStrToBmpNum error!!! \n");
+		return OSA_EFAIL;
+	}
+
+	/* main channel 1080p */
+	g_atOSDprm_datetime.bmpNum = strBmpNum;
+	g_atOSDprm_datetime.bmp = (osd_char *)calloc(strBmpNum, sizeof(osd_char));
+
+	if (NULL == g_atOSDprm_datetime.bmp){
+		OSA_ERROR("HalCodecSetOsdDisplayTime malloc g_atOSDprm_datetime.bmp error!!! \n");
+		return OSA_EFAIL;
+	}
+
+	g_atOSDprm_datetime.bmp->len      = strBmpNum;
+	g_atOSDprm_datetime.bmp->fontsize = g_fontsize;
+	g_atOSDprm_datetime.bmp->textPosX = Int32X;
+	g_atOSDprm_datetime.bmp->textPosY = Int32Y;
+	g_atOSDprm_datetime.bmp->flag     = (char)u8Enable;
+	Int32Ret = Str2Bmp_String2BmpBuffer(datetime, sizeof(datetime), &g_atOSDprm_datetime.bmp, OSD_MENU_1080P);
+	if(Int32Ret != OSA_SOK){
+		OSA_ERROR("Str2Bmp_String2BmpBuffer!\n");
+		return OSA_EFAIL;
+	}
+	if(g_atOSDprm_datetime.bmp == NULL){
+		OSA_printf("g_atOSDprm_datetime.bmp!\n");
+		return OSA_EFAIL;
+	}
+	stream_feature_setup(STREAM_FEATURE_DATETIMEPRM, &g_atOSDprm_datetime);
+	g_atOSDprm_datetime.bmp = NULL;
+
+	/* aux channel D1 */
+	g_atOSDprm_datetime.bmpNum = strBmpNum;
+	g_atOSDprm_datetime.bmp = (osd_char *)calloc(strBmpNum, sizeof(osd_char));
+
+	if (NULL == g_atOSDprm_datetime.bmp){
+		OSA_ERROR("HalCodecSetOsdDisplayTime malloc g_atOSDprm_datetime.bmp error!!! \n");
+		return OSA_EFAIL;
+	}
+
+	g_atOSDprm_datetime.bmp->len      = strBmpNum;
+	g_atOSDprm_datetime.bmp->fontsize = 0;
+	g_atOSDprm_datetime.bmp->textPosX = Int32X;
+	g_atOSDprm_datetime.bmp->textPosY = Int32Y;
+	g_atOSDprm_datetime.bmp->flag     = (char)u8Enable;
+	Int32Ret = Str2Bmp_String2BmpBuffer(datetime, sizeof(datetime), &g_atOSDprm_datetime.bmp, OSD_MENU_D1);
+	if(Int32Ret != OSA_SOK){
+		OSA_ERROR("Str2Bmp_String2BmpBuffer!\n");
+		return OSA_EFAIL;
+	}
+	if(g_atOSDprm_datetime.bmp == NULL){
+		OSA_printf("g_atOSDprm_datetime.bmp!\n");
+		return OSA_EFAIL;
+	}
+	stream_feature_setup(STREAM_FEATURE_AUX_DATETIMEPRM, &g_atOSDprm_datetime);
+	g_atOSDprm_datetime.bmp = NULL;
+
+	OSA_printf( "HalCodecSetOsdDisplayTime: Successful\n");
+	return OSA_SOK;
+}
+
+Int32 HalCodecSetOsdDisplayLprInfo(Int8 *string,UInt32 strlen, UInt32 u32X, UInt32 u32Y)
+{
+	Int32 Int32Ret = FAILURE;
+	Int32 strBmpNum = 0;
+	Int32 Int32X,Int32Y;
+	TOSDPrm g_atOSDprm_lprInfo;
+
+    Int32X = (Int32)u32X;
+    Int32Y = (Int32)u32Y;
+
+	if (OSA_SOK != GetStrToBmpNum(string, strlen, &strBmpNum)){
+		OSA_ERROR("GetStrToBmpNum!!! \n");
+		return OSA_EFAIL;
+	}
+
+	/* main channel 1080p */
+	g_atOSDprm_lprInfo.bmpNum = strBmpNum;
+	g_atOSDprm_lprInfo.bmp = (osd_char *)calloc(strBmpNum, sizeof(osd_char));
+
+	if (NULL == g_atOSDprm_lprInfo.bmp){
+		OSA_ERROR("NULL == g_atOSDprm_lprInfo.bmp!!! \n");
+		return OSA_EFAIL;
+	}
+
+	g_atOSDprm_lprInfo.bmp->len      = strBmpNum;
+	g_atOSDprm_lprInfo.bmp->fontsize = g_fontsize;
+	g_atOSDprm_lprInfo.bmp->textPosX = Int32X;
+	g_atOSDprm_lprInfo.bmp->textPosY = Int32Y;
+	g_atOSDprm_lprInfo.bmp->flag     = TRUE;
+	Int32Ret = Str2Bmp_String2BmpBuffer(string, strlen, &g_atOSDprm_lprInfo.bmp, OSD_MENU_1080P);
+	if(Int32Ret != OSA_SOK){
+		OSA_ERROR("Str2Bmp_String2BmpBuffer!\n");
+		return OSA_EFAIL;
+	}
+	if(g_atOSDprm_lprInfo.bmp == NULL){
+		OSA_printf("g_atOSDprm_lprInfo.bmp == NULL!\n");
+		return OSA_EFAIL;
+	}
+	stream_feature_setup(STREAM_FEATURE_LPRINFOPRM, &g_atOSDprm_lprInfo);
+	g_atOSDprm_lprInfo.bmp = NULL;
+
+	return OSA_SOK;
+}
+
 /*
 static unsigned int GetTimeStamp(void)
 {
@@ -205,9 +359,51 @@ Void NotifyCbVpssM3(UInt16 procId, UInt16 lineId, UInt32 eventId, UArg arg,
     }
 }
 
+typedef struct TagHOSTLprResualt{
+    UInt32 payload;
+	Int32 frameAddr;
+	Int8 resualtStr[64];
+} THOSTLprResualt;
+static Int32 getCurTimeInString(Int8 *str)
+{
+	time_t now;
+	struct tm *timenow;
+
+	if(!str){
+		return OSA_EFAIL;
+	}
+	time(&now);
+	timenow = gmtime(&now);
+	sprintf(str,"%04d%02d%02d%02d%02d%02d  ",\
+		timenow->tm_year+1900,
+		timenow->tm_mon+1,
+		timenow->tm_mday,
+		timenow->tm_hour,
+		timenow->tm_min,
+		timenow->tm_sec);
+	return OSA_SOK;
+}
+
+static Int32 DramPlrInfoToFrame(Int32 frameAddr,Int8 *resString)
+{
+#if 1 // for test
+	Int32 ret;
+	Int8 tmpStr[128]={0};
+	//OSA_printf("DrawAddr = 0x%x, String=%s\n",frameAddr,resString);
+	ret = getCurTimeInString(tmpStr);
+	if(ret == OSA_SOK){
+		strcat(tmpStr,resString);
+		HalCodecSetOsdDisplayLprInfo(tmpStr,strlen(tmpStr),0,0);
+	}
+#else
+	HalCodecSetOsdDisplayLprInfo(resString,strlen(resString),0,0);
+#endif
+	return OSA_SOK;
+}
 Void NotifyCbDsp(UInt16 procId, UInt16 lineId, UInt32 eventId, UArg arg,
                  UInt32 payload)
 {
+#if 0
     if(payload == VALINK_EVT_STOP)
     {
         SendDMVAAlarmEventStop();
@@ -216,6 +412,20 @@ Void NotifyCbDsp(UInt16 procId, UInt16 lineId, UInt32 eventId, UArg arg,
     {
         SendDMVAAlarmEventStart(payload);
     }
+#else
+	Ptr ptBuf = NULL;
+    THOSTLprResualt *ptsOsdPayload = NULL;
+    ptBuf = SharedRegion_getPtr(payload);
+	ptsOsdPayload = (THOSTLprResualt *)ptBuf;
+
+	if(ptsOsdPayload!=NULL){
+		if(ptsOsdPayload->payload == 0x00000001){
+			//OSA_printf("Addr = 0x%x, String=%s\n",ptsOsdPayload->frameAddr,ptsOsdPayload->resualtStr);
+			DramPlrInfoToFrame((Int32)SharedRegion_getPtr(ptsOsdPayload->frameAddr),ptsOsdPayload->resualtStr);
+		}
+	}
+
+#endif
 }
 
 extern int AlarmDrvInit(int proc_id);
@@ -295,6 +505,7 @@ int stream_init(STREAM_PARM * pParm, STREAM_SET * pSet)
     System_ipcNotifyRegisterAppCb(SYSTEM_PROC_DSP,(void*)NotifyCbDsp);
 #endif
 
+	Str2Bmp_Initial(VideoStd_1080I_25);
     return STREAM_SUCCESS;
 }
 
@@ -711,6 +922,8 @@ int stream_end(STREAM_PARM * pParm)
 #ifdef IPNC_DSP_ON
     System_ipcNotifyUnregisterAppCb(SYSTEM_PROC_DSP);
 #endif
+
+	Str2Bmp_Deinitial();
 
     return STREAM_SUCCESS;
 }
@@ -1762,8 +1975,8 @@ void *Msg_CTRL(void *args)
 
                     memcpy(&datetimeParam, &msgbuf.mem_info,
                            sizeof(DateTimePrm));
-                    stream_feature_setup(STREAM_FEATURE_DATETIMEPRM,
-                                         &datetimeParam);
+                    //stream_feature_setup(STREAM_FEATURE_DATETIMEPRM,
+                    //                     &datetimeParam);
                     msgbuf.ret = 0;
                     break;
                 }
@@ -2938,6 +3151,7 @@ void stream_feature_setup(int nFeature, void *pParm)
         }
         case STREAM_FEATURE_DATETIMEPRM:
         {
+		#if 0
             // VIDEO_streamSetDateTimePrm((DateTimePrm*)pParm);
             DateTimePrm *pDateTimePrm = (DateTimePrm *) pParm;
 
@@ -2951,8 +3165,75 @@ void stream_feature_setup(int nFeature, void *pParm)
 
             swosdGuiPrm.streamId = 1;
             Vsys_setSwOsdPrm(VSYS_SWOSDDATETIME, &swosdGuiPrm);
+			break;
+		#else
+			Vsys_swOsdPrm *pswosdGuiPrm_datetime;
+			TOSDPrm *pPrm_datetime = (TOSDPrm *) pParm;
 
-            break;
+			pswosdGuiPrm_datetime = ( Vsys_swOsdPrm *)malloc(sizeof(Vsys_swOsdPrm));
+			pswosdGuiPrm_datetime->streamId = 0;
+			pswosdGuiPrm_datetime->dateEnable = pPrm_datetime->dateEnable;
+			pswosdGuiPrm_datetime->timeEnable = pPrm_datetime->timeEnable;
+			pswosdGuiPrm_datetime->logoEnable = pPrm_datetime->logoEnable;
+			pswosdGuiPrm_datetime->logoPos = pPrm_datetime->logoPos;
+			pswosdGuiPrm_datetime->textEnable = pPrm_datetime->textEnable;
+			pswosdGuiPrm_datetime->textPos = pPrm_datetime->textPos;
+			pswosdGuiPrm_datetime->detailedInfo = pPrm_datetime->detailedInfo;
+			pswosdGuiPrm_datetime->osd_bmp_num = pPrm_datetime->bmpNum;
+			pswosdGuiPrm_datetime->bmp = (TOSD_Char_sys *)pPrm_datetime->bmp;
+			if(pswosdGuiPrm_datetime->bmp == NULL){
+				OSA_ERROR("pswosdGuiPrm_datetime->bmp == NULL !\n");
+			}
+			Vsys_setSwOsdBmp(VSYS_OSD_DATETIME_BMP, &pswosdGuiPrm_datetime);
+			pswosdGuiPrm_datetime =NULL;
+			break;
+		#endif
+        }
+		case STREAM_FEATURE_AUX_DATETIMEPRM:
+        {
+			Vsys_swOsdPrm *pswosdGuiPrm_datetime;
+			TOSDPrm *pPrm_datetime = (TOSDPrm *) pParm;
+
+			pswosdGuiPrm_datetime = ( Vsys_swOsdPrm *)malloc(sizeof(Vsys_swOsdPrm));
+			pswosdGuiPrm_datetime->streamId = 0;
+			pswosdGuiPrm_datetime->dateEnable = pPrm_datetime->dateEnable;
+			pswosdGuiPrm_datetime->timeEnable = pPrm_datetime->timeEnable;
+			pswosdGuiPrm_datetime->logoEnable = pPrm_datetime->logoEnable;
+			pswosdGuiPrm_datetime->logoPos = pPrm_datetime->logoPos;
+			pswosdGuiPrm_datetime->textEnable = pPrm_datetime->textEnable;
+			pswosdGuiPrm_datetime->textPos = pPrm_datetime->textPos;
+			pswosdGuiPrm_datetime->detailedInfo = pPrm_datetime->detailedInfo;
+			pswosdGuiPrm_datetime->osd_bmp_num = pPrm_datetime->bmpNum;
+			pswosdGuiPrm_datetime->bmp = (TOSD_Char_sys *)pPrm_datetime->bmp;
+			if(pswosdGuiPrm_datetime->bmp == NULL){
+				OSA_ERROR("pswosdGuiPrm_datetime->bmp == NULL !\n");
+			}
+			Vsys_setSwOsdBmp(VSYS_OSD_AUX_DATETIME_BMP, &pswosdGuiPrm_datetime);
+			pswosdGuiPrm_datetime =NULL;
+			break;
+        }
+		case STREAM_FEATURE_LPRINFOPRM:
+        {
+			Vsys_swOsdPrm *pswosdGuiPrm_datetime;
+			TOSDPrm *pPrm_datetime = (TOSDPrm *) pParm;
+
+			pswosdGuiPrm_datetime = ( Vsys_swOsdPrm *)malloc(sizeof(Vsys_swOsdPrm));
+			pswosdGuiPrm_datetime->streamId = 0;
+			pswosdGuiPrm_datetime->dateEnable = pPrm_datetime->dateEnable;
+			pswosdGuiPrm_datetime->timeEnable = pPrm_datetime->timeEnable;
+			pswosdGuiPrm_datetime->logoEnable = pPrm_datetime->logoEnable;
+			pswosdGuiPrm_datetime->logoPos = pPrm_datetime->logoPos;
+			pswosdGuiPrm_datetime->textEnable = pPrm_datetime->textEnable;
+			pswosdGuiPrm_datetime->textPos = pPrm_datetime->textPos;
+			pswosdGuiPrm_datetime->detailedInfo = pPrm_datetime->detailedInfo;
+			pswosdGuiPrm_datetime->osd_bmp_num = pPrm_datetime->bmpNum;
+			pswosdGuiPrm_datetime->bmp = (TOSD_Char_sys *)pPrm_datetime->bmp;
+			if(pswosdGuiPrm_datetime->bmp == NULL){
+				OSA_ERROR("pswosdGuiPrm_datetime->bmp == NULL !\n");
+			}
+			Vsys_setSwOsdBmp(VSYS_OSD_LPRINFO_BMP, &pswosdGuiPrm_datetime);
+			pswosdGuiPrm_datetime =NULL;
+			break;
         }
         case STREAM_FEATURE_OSDPRM1:
         {

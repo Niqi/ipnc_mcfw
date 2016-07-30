@@ -481,6 +481,7 @@ Void App_runDemo(Void)
 
 	gUI_mcfw_config.initDone = 1;
 
+	HalCodecSetOsdDisplayTime(FALSE,0,0);
     OSA_printf("\nApplication Run Completed\n");
 }
 

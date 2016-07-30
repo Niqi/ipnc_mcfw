@@ -57,6 +57,7 @@ Int32 AlgVehicleLink_algCreate(AlgVehicleLink_Obj * pObj, AlgVehicleLink_CreateP
     return FVID2_SOK;
 }
 
+
 Int32 AlgVehicleLink_algDelete(AlgVehicleLink_Obj * pObj)
 {    
     Int32 status;
@@ -70,6 +71,56 @@ Int32 AlgVehicleLink_algDelete(AlgVehicleLink_Obj * pObj)
     }
     
     Vps_printf(" %d: ALGVEHICLE : algDelete Done !!!\n", Utils_getCurTimeInMsec());
+
+	return FVID2_SOK;
+}
+typedef struct TagDSPLprResualt{
+    UInt32 payload;
+	Int32 frameAddr;
+	Int8 resualtStr[64];
+} TDSPLprResualt;
+TDSPLprResualt *gTDSPLprResualt=NULL;
+SharedRegion_SRPtr gSRPtrTDSPLprResualt = NULL;
+
+static Int32 Valink_OSDInitial(void)
+{
+    Ptr buf = NULL;
+    Ptr srHeap = NULL;
+	srHeap = SharedRegion_getHeap(0);
+	UTILS_assert(srHeap != NULL);
+
+	buf = (TDSPLprResualt *)Memory_calloc(srHeap, sizeof(gTDSPLprResualt), 128, NULL);
+	gTDSPLprResualt = (TDSPLprResualt *)buf;
+	gSRPtrTDSPLprResualt = SharedRegion_getSRPtr(buf, 0);
+
+	gTDSPLprResualt->payload   = 0x00000001;
+	gTDSPLprResualt->frameAddr = 0x00000000;
+	memset(gTDSPLprResualt->resualtStr,0x00,sizeof(gTDSPLprResualt->resualtStr));
+
+	return FVID2_SOK;
+}
+static Int32 Valink_CreatOSDFrame(Int32 frameAddr,const char *resString)
+{
+	static Int32 bCreatPtr = FALSE;
+	Int32 notifystatus;
+
+	if(resString == NULL){
+		return FVID2_EFAIL;
+	}
+	if(bCreatPtr == FALSE){
+		bCreatPtr = TRUE;
+		Valink_OSDInitial();
+	}
+	gTDSPLprResualt->frameAddr = frameAddr;
+	memcpy(gTDSPLprResualt->resualtStr,resString,strlen(resString));
+	notifystatus = Notify_sendEvent(System_getSyslinkProcId(SYSTEM_PROC_HOSTA8),
+			SYSTEM_IPC_NOTIFY_LINE_ID,
+			SYSTEM_IPC_NOTIFY_EVENT_ID_APP,
+			(Int32)gSRPtrTDSPLprResualt,
+			TRUE);
+	if(notifystatus != Notify_S_SUCCESS){
+		return FVID2_EFAIL;
+	}
 
 	return FVID2_SOK;
 }
@@ -96,7 +147,7 @@ Int32 AlgVehicleLink_algProcessData(AlgVehicleLink_Obj * pObj)
             {
 	            /* statist process time start */
 	            start = Utils_getCurTimeInUsec();  
-				
+
                 status = AlgVehicleLink_ThPlateIdalgProcessData(pAlgObj, pFullFrame, &pObj->outObj[0].bufOutQue);
 				
 	            /* statist process time end */
@@ -106,11 +157,11 @@ Int32 AlgVehicleLink_algProcessData(AlgVehicleLink_Obj * pObj)
 				{
 					if(pAlgObj->chObj[0].thPlateIdResult.thPlateIdResultAll[0].nConfidence > 50)
 					{
-						
-				        Vps_printf("\n THPLATEIDALG: Process frame, numVeh:%d, sn:%s, cl:%d, tp:%d, tm:%ld \n", 
-				                        pAlgObj->chObj[0].thPlateIdResult.nNumberOfVehicle, 
-				                        pAlgObj->chObj[0].thPlateIdResult.thPlateIdResultAll[0].license, 
-				                        pAlgObj->chObj[0].thPlateIdResult.thPlateIdResultAll[0].nColor, 
+
+				        Vps_printf("\n THPLATEIDALG: Process frame, numVeh:%d, sn:%s, cl:%d, tp:%d, tm:%ld \n",
+				                        pAlgObj->chObj[0].thPlateIdResult.nNumberOfVehicle,
+				                        pAlgObj->chObj[0].thPlateIdResult.thPlateIdResultAll[0].license,
+				                        pAlgObj->chObj[0].thPlateIdResult.thPlateIdResultAll[0].nColor,
 				                        pAlgObj->chObj[0].thPlateIdResult.thPlateIdResultAll[0].nConfidence,
 				                        (end - start)/1000);			
 					}					
@@ -136,10 +187,12 @@ Int32 AlgVehicleLink_algProcessData(AlgVehicleLink_Obj * pObj)
             			   pAlgObj->chObj[0].maxProcessTime);	   
                 pAlgObj->chObj[0].processFrCnt     = 0;
                 pAlgObj->chObj[0].totalProcessTime = 0;
-            } 
-
+            }
+			Valink_CreatOSDFrame((Int32)pFullFrame->addr[0][0],"123456");
         	status = Utils_bufPutFullFrame(&pObj->outFrameQue, pFullFrame);
-        	UTILS_assert(status == FVID2_SOK);			
+        	UTILS_assert(status == FVID2_SOK);
+			
+			System_sendLinkCmd(pObj->createArgs.outQueParams.nextLink, SYSTEM_CMD_NEW_DATA);
 			procesFrames++;
         }
     } while ((status == FVID2_SOK) && (pFullFrame != NULL));
@@ -147,9 +200,9 @@ Int32 AlgVehicleLink_algProcessData(AlgVehicleLink_Obj * pObj)
 	if(procesFrames){
 	    /* send SYSTEM_CMD_NEW_DATA to next link */
 		//Vps_rprintf("%s %d\n",__FUNCTION__,__LINE__);
-	    System_sendLinkCmd(pObj->createArgs.outQueParams.nextLink, SYSTEM_CMD_NEW_DATA);
-	}	
-        
+	    //System_sendLinkCmd(pObj->createArgs.outQueParams.nextLink, SYSTEM_CMD_NEW_DATA);
+	}
+
     return FVID2_SOK;
 }
 

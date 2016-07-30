@@ -27,7 +27,7 @@ MCFW_INC=-I$(MCFW_ROOT_PATH)/mcfw/interfaces -I$(MCFW_ROOT_PATH)/mcfw/interfaces
 
 IPNC_APP_INC=-I$(PUBLIC_INCLUDE_DIR)
 
-STREAM_INC=-I$(MCFW_ROOT_PATH)/demos/mcfw_api_demos/stream
+STREAM_INC=-I$(MCFW_ROOT_PATH)/demos/mcfw_api_demos/stream -I$(MCFW_ROOT_PATH)/demos/mcfw_api_demos/osd
 
 USECASE_INC=-I$(MCFW_ROOT_PATH)/demos/mcfw_api_demos/multich_usecase
 
@@ -47,7 +47,7 @@ SHMEM_LIB=$(IPNC_DIR)/interface/lib/Appro_interface.a $(IPNC_DIR)/interface/lib/
 
 CMEM_LIB=$(linuxutils_PATH)/packages/ti/sdo/linuxutils/cmem/lib/cmem.a470MV
 
-
+FREETYPE_LIBS=$(linuxdevkit_PATH)/usr/lib/libfreetype.so
 
 endif # ifndef $(INCLUDES_MK)
 
