@@ -1109,6 +1109,10 @@ int MemMng_VidFrame_Insert(void *pData, int size, int blks,
     pVidInfo->frame[pVidInfo->cur_frame].realsize = size;
     pVidInfo->frame[pVidInfo->cur_frame].timestamp = pVidInfo->timestamp;
     pVidInfo->frame[pVidInfo->cur_frame].temporalId = pVidInfo->temporalId;
+    if(pVidInfo->video_type == VIDEO_MJPG)
+    {
+        strcpy(pVidInfo->frame[pVidInfo->cur_frame].license, pVidInfo->license);
+    }
 
     if (frame_type != DUMMY_FRAME)
     {

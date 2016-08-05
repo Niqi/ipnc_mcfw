@@ -1652,7 +1652,7 @@ Int32 Vsys_setSwOsdBmp(VSYS_SWOSD_SETBMP swOsdSetPrm,Vsys_swOsdPrm **ppSwOsdPrm)
 			if(swOsdGuiPrm_aux_datetime.bmp == NULL){
 				OSA_ERROR("swOsdGuiPrm_aux_datetime.bmp == NULL!\n");
 				return OSA_EFAIL;
-			}
+			}			
 			if (gVsysModuleContext.swOsdId != SYSTEM_LINK_ID_INVALID){
 				System_linkControl(gVsysModuleContext.swOsdId,
 							   SWOSDLINK_SETBMP_LPRINFO,

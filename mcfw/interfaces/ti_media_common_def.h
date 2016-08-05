@@ -387,7 +387,9 @@ typedef struct {
      UInt32 bottomFieldBitBufSize;
      /**< Size of the bottom field Bitstream. Filled by field Merged
       *   interlaced encoders     */
-          
+
+     char license[16];
+
 } VCODEC_BITSBUF_S;
 
 /**

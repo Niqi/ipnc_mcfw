@@ -90,6 +90,13 @@ Int32 AlgVehicleLink_create(AlgVehicleLink_Obj * pObj,
     for (frameId = 0; frameId < ALGVEHICLE_LINK_MAX_OUT_FRAMES; frameId++)
     {
         pFrame = &pObj->outFrames[frameId];
+		pObj->frameInfo[frameId].rtChInfoUpdate = TRUE;
+		pObj->frameInfo[frameId].rtChInfo.width = pObj->inQueInfo.chInfo[0].width;
+		pObj->frameInfo[frameId].rtChInfo.height = pObj->inQueInfo.chInfo[0].height;
+		pObj->frameInfo[frameId].rtChInfo.pitch[0] = pObj->inQueInfo.chInfo[0].pitch[0];
+		pObj->frameInfo[frameId].rtChInfo.pitch[1] = pObj->inQueInfo.chInfo[0].pitch[1];
+		pObj->frameInfo[frameId].rtChInfo.dataFormat = pObj->inQueInfo.chInfo[0].dataFormat;
+		pFrame->appData = &pObj->frameInfo[frameId];		
 		pObj->perFrameCfg[frameId].bufId = (frameId + 1);
 		pFrame->perFrameCfg = (AlgVehicleLink_perFrameConfig*)&pObj->perFrameCfg[frameId];
 #ifdef ALG_NO_PROCESS

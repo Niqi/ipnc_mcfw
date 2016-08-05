@@ -789,6 +789,10 @@ static Void Venc_copyBitBufInfoLink2McFw(VCODEC_BITSBUF_S *dstBuf,
     dstBuf->upperTimeStamp = srcBuf->upperTimeStamp;
     dstBuf->lowerTimeStamp = srcBuf->lowerTimeStamp;
     dstBuf->bottomFieldBitBufSize = srcBuf->bottomFieldBitBufSize;
+    if(2 == srcBuf->channelNum)
+    {
+        strcpy(dstBuf->license, (char *)srcBuf->license);
+    }
 
     if (srcBuf->isKeyFrame)
         dstBuf->frameType      = VCODEC_FRAME_TYPE_I_FRAME;

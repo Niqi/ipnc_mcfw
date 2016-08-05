@@ -337,7 +337,7 @@ Int App_streamSysInit()
 
 Int App_streamSysVidWrite(UInt32 chId, UInt32 codecType, Void * pEncodeBuffer,
                           Int32 frameSize, Int32 frameType, UInt32 timestamp,
-                          UInt32 temporalId)
+                          UInt32 temporalId, char * license)
 {
     UInt32 streamType = STREAM_H264_1;
 
@@ -390,6 +390,11 @@ Int App_streamSysVidWrite(UInt32 chId, UInt32 codecType, Void * pEncodeBuffer,
 	}	
 		
 	gCurCodecType[chId] = codecType;	
+
+	if(2 != chId)
+	{
+		timestamp = AUDIO_GetTimeStamp();
+	}
 	
     if (writeEnable == TRUE)
     {
@@ -397,8 +402,9 @@ Int App_streamSysVidWrite(UInt32 chId, UInt32 codecType, Void * pEncodeBuffer,
                      frameSize,                            // size
                      frameType,                            // frame_type
                      streamType,                           // stream_type
-                     AUDIO_GetTimeStamp(),                 // timestamp
+                     timestamp,// AUDIO_GetTimeStamp(),                 // timestamp
                      temporalId,                           // temporalId
+                     license,
                      stream_get_handle());                 // pParm
 
         if ((snapEnable) && (streamType == STREAM_MJPG))
@@ -481,7 +487,8 @@ static Void *App_ipcBitsRecvStreamFxn(Void * prm)
                                   (fullBufList.bitsBuf[i].frameType ==
                                    VCODEC_FRAME_TYPE_I_FRAME) ? I_FRAME :
                                   P_FRAME, fullBufList.bitsBuf[i].timestamp,
-                                  fullBufList.bitsBuf[i].temporalId);
+                                  fullBufList.bitsBuf[i].temporalId,
+                                  fullBufList.bitsBuf[i].license);
 
 #ifdef DUMP_BITSTREAM
 			{
@@ -571,7 +578,8 @@ static Void *App_ipcBitsRecvStreamFxn(Void * prm)
                                   (fullBufList.bitsBuf[i].frameType ==
                                    VCODEC_FRAME_TYPE_I_FRAME) ? I_FRAME :
                                   P_FRAME, fullBufList.bitsBuf[i].timestamp,
-                                  fullBufList.bitsBuf[i].temporalId);
+                                  fullBufList.bitsBuf[i].temporalId,
+                                  NULL);
         }
 
         /* relese the buffers back */

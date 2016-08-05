@@ -149,6 +149,7 @@ typedef struct _VIDEO_FRAME {
     unsigned int timestamp;
     unsigned int temporalId;
     int ref_serial[VIDOE_INFO_END];
+    char license[16];
 } VIDEO_FRAME;
 
 typedef struct _VIDEO_GOP {
@@ -181,6 +182,7 @@ typedef struct _VIDEO_BLK_INFO {
     int cur_blk;
     unsigned int timestamp;
     unsigned int temporalId;
+    char license[16];
     VIDEO_GOP gop;
     VIDEO_FRAME *frame;
     CACHE_MNG *cachemng;

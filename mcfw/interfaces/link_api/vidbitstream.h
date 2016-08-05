@@ -94,9 +94,10 @@ typedef struct Bitstream_Buf {
      *   This is useful when display should start from a
      *   particular frame.
      *   This is temporary until Avsync suuports seek functionality*/
-     UInt32 bottomFieldBitBufSize;
-     /**< Size of the bottom field Bitstream. Filled by field Merged
+    UInt32 bottomFieldBitBufSize;
+    /**< Size of the bottom field Bitstream. Filled by field Merged
           interlaced encoders     */
+    Int8 license[16];
 } Bitstream_Buf;
 
 /**

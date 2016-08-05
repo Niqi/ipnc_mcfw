@@ -70,6 +70,7 @@ typedef struct VIDFrame_Buf {
     UInt32 framePitch[VIDFRAME_MAX_PLANES];
     /**< Pitch of the frame */
     Ptr    linkPrivate;
+    Int8 license[16];
     /**< Link private info. Application should preserve this value and not overwrite it */
 } VIDFrame_Buf;
 

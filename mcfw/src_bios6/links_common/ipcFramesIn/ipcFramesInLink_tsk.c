@@ -437,7 +437,10 @@ static Void IpcFramesInLink_copyFrameInfo(IpcFramesInLink_Obj * pObj,
     /* HACK HACK HACK !!! modify rtChInfoUpdate = TRUE once the 
        next link support dynamic resolution change */
     frmInfo->rtChInfoUpdate = TRUE;//FALSE;
-
+    if(2 == src->channelNum)
+    {
+        strcpy((char *)frmInfo->license, (char *)src->license);
+    }
 }
 
 

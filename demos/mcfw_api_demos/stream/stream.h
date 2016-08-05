@@ -239,7 +239,7 @@ int stream_update_vol(STREAM_PARM * pParm,int streamType);
  */
 int stream_write(void *pAddr, int size, int frame_type, int stream_type,
                  unsigned int timestamp, unsigned int temporalId,
-                 STREAM_PARM * pParm);
+                 char * license, STREAM_PARM * pParm);
 /* ===================================================================
  *  @func     stream_end
  *

@@ -55,6 +55,25 @@ extern "C" {
 #define ALGVEHICLE_LINK_THPLATEID_CMD_SET_RECOG_REGION                              (0x800b)
 #define ALGVEHICLE_LINK_THPLATEID_CMD_PRINT_STATISTICS                                (0x800c)
 
+
+typedef struct {
+	char	license[16];	// 车牌字符串
+	char	color[8];		// 车牌颜色
+	int 	nColor;			// 车牌颜色
+	int		nType;			// 车牌类型
+	int		nRectLeftX;		// 车牌坐标左上角X
+	int		nRectLeftY;		// 车牌坐标左上角Y
+	int		nRectWidth;		// 车牌宽度
+	int		nRectHeight;	// 车牌高度
+} DSP_LPR_RESULT;
+
+typedef struct TagDSPLprResualt{
+    UInt32 payload;
+    Int32 frameAddr;
+    DSP_LPR_RESULT lprResult;
+} TDSPLprResualt;
+
+
 /**
     \brief ThPlateId channel control
 

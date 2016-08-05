@@ -1545,6 +1545,8 @@ static Int32 EncLink_codecSubmitData(EncLink_Obj * pObj)
                 numProcessCh++;
                 pChObj->forceAvoidSkipFrame = FALSE;
 
+                strcpy((char *)pOutBuf->license, (char *)pInFrameInfo->license);
+
                 status =
                     Utils_quePut(&pObj->encProcessTsk[tskId].processQue,
                                  pReqObj, BIOS_NO_WAIT);

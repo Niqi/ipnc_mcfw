@@ -324,7 +324,7 @@ Void Audio_recordMain(Void * arg)
             stream_write(virtAddr,
                          encFrameSize,
                          AUDIO_FRAME,
-                         STREAM_AUDIO, timestamp, 0, stream_get_handle());
+                         STREAM_AUDIO, timestamp, 0, NULL, stream_get_handle());
 
 			if(gUI_mcfw_config.audioCfg.alarmEnable==TRUE)
 			{

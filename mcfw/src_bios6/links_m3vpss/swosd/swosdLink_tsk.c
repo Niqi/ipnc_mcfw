@@ -220,7 +220,7 @@ void SwosdLink_CopyOsdStruct(TSWOSD_Char *dst_Osd, TSWOSD_Char *src_Osd)
 	dst_Osd->ackNum 	 = src_Osd->ackNum;
 	dst_Osd->textPosX	 = src_Osd->textPosX;
 	dst_Osd->textPosY 	 = src_Osd->textPosY;
-	dst_Osd->fontsize	 = src_Osd->fontsize;
+	dst_Osd->fontsize	 = src_Osd->fontsize;	
 
 	aux_bufsiz = src_Osd->rows * src_Osd->pitch;
 	memcpy(dst_Osd->buffer, src_Osd->buffer, aux_bufsiz);
@@ -231,6 +231,12 @@ void SwosdLink_CopyOsdInfoMem(TSWOSD_Char *dst_Osd, TSWOSD_Char *src_Osd, int si
 	int loop = 0;
 	TSWOSD_Char *dst_ptr = (TSWOSD_Char *)dst_Osd;
 	TSWOSD_Char *src_ptr = (TSWOSD_Char *)src_Osd;
+
+	dst_Osd->frameAddr   = src_Osd->frameAddr;	
+	dst_Osd->nRectLeftX  = src_Osd->nRectLeftX;
+	dst_Osd->nRectLeftY  = src_Osd->nRectLeftY;
+	dst_Osd->nRectWidth  = src_Osd->nRectWidth;
+	dst_Osd->nRectHeight = src_Osd->nRectHeight;	
 
 	while (loop < size)
 	{
@@ -281,10 +287,55 @@ Int32 SwosdLink_SaveTimeInfo(Utils_MsgHndl *pMsg, UInt32 cmd)
 
 	/* 一次性接收BMP并保存到内存中 */
 	SwosdLink_CopyOsdInfoMem(save_time_info, msg_time_info, osdBmpNum);
+	
 	return FVID2_SOK;
 }
 
-void SwosdLink_auxSetOsdTime(FVID2_Frame *pFrame,int Width, int Height)
+
+/* Draw the plate rectangles */
+Int32 DM812X_PLATE_RECT_Draw(FVID2_Frame *pFrame, TSWOSD_Char *bmp_time,
+                     			UInt32 frameWidth, UInt32 frameHeight,
+                     			UInt32 frameDataFormat, UInt32 framePitch,
+                     			UInt32 codingFormat)
+{
+    DRAW_InFrame_Info_t inFrameInfo;
+    DRAW_Rect_Info_t rectInfo;
+
+	if(2 == pFrame->channelNum)
+	{
+	    /* input frame info */
+	    inFrameInfo.videoInOutAddrY = (UInt8 *)((UInt32)pFrame->addr[0][0]);
+	    inFrameInfo.videoInOutAddrUV = (UInt8 *)((UInt32)pFrame->addr[0][1]);
+	    inFrameInfo.videoWidth = frameWidth;
+	    inFrameInfo.videoHeight = frameHeight;
+	    inFrameInfo.videoOffsetH = framePitch;
+	    inFrameInfo.videoOffsetV = frameHeight;
+	    inFrameInfo.videoDataFormat = frameDataFormat;
+	    inFrameInfo.maskEnable = 0;
+
+	    rectInfo.colorY = 0xFF;
+	    rectInfo.colorC = 0x80;
+	    rectInfo.thickness = 4;
+		rectInfo.startX = bmp_time->nRectLeftX;
+		rectInfo.startY = bmp_time->nRectLeftY;
+		rectInfo.width = bmp_time->nRectWidth;
+		rectInfo.height= bmp_time->nRectHeight;
+
+	    //Semaphore_pend(pAlgHndl->plateRectDrawSem, BIOS_WAIT_FOREVER);
+
+	    /* Draw the rectangles */
+	    DM812X_DRAW_rectangle(&inFrameInfo, &rectInfo, framePitch);
+
+	    //Semaphore_post(pAlgHndl->plateRectDrawSem);
+	}
+
+    return FVID2_SOK;
+}
+
+
+void SwosdLink_auxSetOsdTime(FVID2_Frame *pFrame,int Width, int Height,
+	                     		UInt32 frameDataFormat, UInt32 framePitch,
+                     			UInt32 codingFormat)
 {
 	TSWOSD_Char *displayInfo = NULL;
 	int num = 0;
@@ -305,26 +356,36 @@ void SwosdLink_auxSetOsdTime(FVID2_Frame *pFrame,int Width, int Height)
 				return;
 			}
 			if (0 == pFrame->channelNum){
-				displayInfo->textPosX = 0;
-				displayInfo->textPosY = 0;
+				//displayInfo->textPosX = 0;
+				//displayInfo->textPosY = 0;
 				Width = 1952;
 				OSD_time_show(pFrame->channelNum, SwosdLink_GetTimeInfo(&num), displayInfo, displayInfo->textPosX,
 					displayInfo->textPosY, (unsigned char *)pFrame->addr[0][0],Width,Height,displayInfo->fontsize);
 			}
 			else if (1 == pFrame->channelNum){
-				displayInfo->textPosX = 0;
-				displayInfo->textPosY = 0;
+				//displayInfo->textPosX = 0;
+				//displayInfo->textPosY = 0;
 				Width = 736;
 				OSD_time_show(pFrame->channelNum, SwosdLink_GetTimeInfo(&num), displayInfo, displayInfo->textPosX,
 					displayInfo->textPosY, (unsigned char *)pFrame->addr[0][0],Width,Height,displayInfo->fontsize);
 			}
 		}
 		else {
-			displayInfo->textPosX = 0;
-			displayInfo->textPosY = 0;
+			//displayInfo->textPosX = 0;
+			//displayInfo->textPosY = 0;
 			Width = 1920;
 			OSD_textShow(displayInfo->textPosX,displayInfo->textPosY, displayInfo,
 				(unsigned char *)pFrame->addr[0][0],Width,Height);
+
+			//Vps_rprintf("SWOSD: frameAddr:0x%08x, alg:0x%08x \n", (Int32)pFrame->addr[0][0], displayInfo->frameAddr);
+			
+			DM812X_PLATE_RECT_Draw(pFrame, displayInfo,	
+                        Width,
+                        Height,
+                        frameDataFormat,
+                        framePitch, codingFormat);
+
+			displayInfo->flag = FALSE;
 		}
 	}
 }
@@ -665,7 +726,9 @@ Int32 SwosdLink_processFrames(SwosdLink_Obj * pObj)
             }
 
 			/* show current time */
-			SwosdLink_auxSetOsdTime(pFullFrame,Width, Height);
+			SwosdLink_auxSetOsdTime(pFullFrame,Width, Height,
+                                    pChInfo->dataFormat,
+                                    Pitch0, pChInfo->codingformat);
 
 			latency = Utils_getCurTimeInMsec() - pFullFrame->timeStamp;
 			if(latency>pObj->maxLatency)

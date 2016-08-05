@@ -47,6 +47,7 @@ typedef struct AlgVehicleLink_Obj {
     System_LinkInfo info;
 
     FVID2_Frame outFrames[ALGVEHICLE_LINK_MAX_OUT_FRAMES];
+    System_FrameInfo frameInfo[ALGVEHICLE_LINK_MAX_OUT_FRAMES];	
     AlgVehicleLink_perFrameConfig perFrameCfg[ALGVEHICLE_LINK_MAX_OUT_FRAMES];
     FVID2_Format bufferFrameFormat;
     Utils_BufHndl outFrameQue;  

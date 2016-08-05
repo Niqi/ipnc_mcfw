@@ -176,7 +176,7 @@ typedef struct {
     UInt32 muxOrgChNum;
     UInt32 muxDupCount;
     FVID2_Frame *pMuxDupOrgFrame;
-
+    Int8 license[16];
 } System_FrameInfo;
 
 

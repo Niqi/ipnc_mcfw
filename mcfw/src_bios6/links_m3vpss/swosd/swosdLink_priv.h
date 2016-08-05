@@ -42,6 +42,11 @@ typedef struct TagSWOSD_Char {
     Int32 textPosX;
     Int32 textPosY;
     Int32 fontsize;
+    Int32   frameAddr;
+    Int16	nRectLeftX;
+    Int16	nRectLeftY;
+    Int16	nRectWidth;
+    Int16	nRectHeight;	
     UInt32 ackNum;
 }TSWOSD_Char;
 

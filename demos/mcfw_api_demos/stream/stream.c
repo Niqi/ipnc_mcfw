@@ -29,6 +29,7 @@
 #include <mcfw/interfaces/link_api/system_linkId.h>
 #include <mcfw/interfaces/link_api/system_common.h>
 #include <mcfw/interfaces/link_api/vaLink.h>
+#include <mcfw/interfaces/link_api/algVehicleLink.h>
 #include <mcfw/interfaces/link_api/system_const.h>
 #include <cmem.h>
 #include <str2bmp.h>
@@ -248,17 +249,46 @@ Int32 HalCodecSetOsdDisplayTime(UInt8 u8Enable, UInt32 u32X, UInt32 u32Y)
 	return OSA_SOK;
 }
 
-Int32 HalCodecSetOsdDisplayLprInfo(Int8 *string,UInt32 strlen, UInt32 u32X, UInt32 u32Y)
+static Int32 getCurTimeInString(Int8 *str)
+{
+	time_t now;
+	struct tm *timenow;
+
+	if(!str){
+		return OSA_EFAIL;
+	}
+	time(&now);
+	timenow = gmtime(&now);
+	sprintf(str,"%04d%02d%02d%02d%02d%02d  ",\
+		timenow->tm_year+1900,
+		timenow->tm_mon+1,
+		timenow->tm_mday,
+		timenow->tm_hour,
+		timenow->tm_min,
+		timenow->tm_sec);
+	return OSA_SOK;
+}
+
+Int32 HalCodecSetOsdDisplayLprInfo(Int32 frameAddr, DSP_LPR_RESULT *result)
 {
 	Int32 Int32Ret = FAILURE;
 	Int32 strBmpNum = 0;
-	Int32 Int32X,Int32Y;
 	TOSDPrm g_atOSDprm_lprInfo;
+	Int32 ret, strLen;
+	Int8 tmpStr[128]={0};
+	
+	ret = getCurTimeInString(tmpStr);
+	if(ret == OSA_SOK){
+		strcat(tmpStr, result->license);
+	}
+	else
+	{
+		return OSA_EFAIL;
+	}
 
-    Int32X = (Int32)u32X;
-    Int32Y = (Int32)u32Y;
+	strLen = strlen(tmpStr);
 
-	if (OSA_SOK != GetStrToBmpNum(string, strlen, &strBmpNum)){
+	if (OSA_SOK != GetStrToBmpNum(tmpStr, strLen, &strBmpNum)){
 		OSA_ERROR("GetStrToBmpNum!!! \n");
 		return OSA_EFAIL;
 	}
@@ -274,10 +304,15 @@ Int32 HalCodecSetOsdDisplayLprInfo(Int8 *string,UInt32 strlen, UInt32 u32X, UInt
 
 	g_atOSDprm_lprInfo.bmp->len      = strBmpNum;
 	g_atOSDprm_lprInfo.bmp->fontsize = g_fontsize;
-	g_atOSDprm_lprInfo.bmp->textPosX = Int32X;
-	g_atOSDprm_lprInfo.bmp->textPosY = Int32Y;
+	g_atOSDprm_lprInfo.bmp->textPosX = 20;
+	g_atOSDprm_lprInfo.bmp->textPosY = 20;
 	g_atOSDprm_lprInfo.bmp->flag     = TRUE;
-	Int32Ret = Str2Bmp_String2BmpBuffer(string, strlen, &g_atOSDprm_lprInfo.bmp, OSD_MENU_1080P);
+	g_atOSDprm_lprInfo.bmp->frameAddr = frameAddr;
+	g_atOSDprm_lprInfo.bmp->nRectLeftX = result->nRectLeftX;
+	g_atOSDprm_lprInfo.bmp->nRectLeftY = result->nRectLeftY;
+	g_atOSDprm_lprInfo.bmp->nRectWidth= result->nRectWidth;
+	g_atOSDprm_lprInfo.bmp->nRectHeight= result->nRectHeight;
+	Int32Ret = Str2Bmp_String2BmpBuffer(tmpStr, strLen, &g_atOSDprm_lprInfo.bmp, OSD_MENU_1080P);
 	if(Int32Ret != OSA_SOK){
 		OSA_ERROR("Str2Bmp_String2BmpBuffer!\n");
 		return OSA_EFAIL;
@@ -359,73 +394,24 @@ Void NotifyCbVpssM3(UInt16 procId, UInt16 lineId, UInt32 eventId, UArg arg,
     }
 }
 
-typedef struct TagHOSTLprResualt{
-    UInt32 payload;
-	Int32 frameAddr;
-	Int8 resualtStr[64];
-} THOSTLprResualt;
-static Int32 getCurTimeInString(Int8 *str)
-{
-	time_t now;
-	struct tm *timenow;
-
-	if(!str){
-		return OSA_EFAIL;
-	}
-	time(&now);
-	timenow = gmtime(&now);
-	sprintf(str,"%04d%02d%02d%02d%02d%02d  ",\
-		timenow->tm_year+1900,
-		timenow->tm_mon+1,
-		timenow->tm_mday,
-		timenow->tm_hour,
-		timenow->tm_min,
-		timenow->tm_sec);
-	return OSA_SOK;
-}
-
-static Int32 DramPlrInfoToFrame(Int32 frameAddr,Int8 *resString)
-{
-#if 1 // for test
-	Int32 ret;
-	Int8 tmpStr[128]={0};
-	//OSA_printf("DrawAddr = 0x%x, String=%s\n",frameAddr,resString);
-	ret = getCurTimeInString(tmpStr);
-	if(ret == OSA_SOK){
-		strcat(tmpStr,resString);
-		HalCodecSetOsdDisplayLprInfo(tmpStr,strlen(tmpStr),0,0);
-	}
-#else
-	HalCodecSetOsdDisplayLprInfo(resString,strlen(resString),0,0);
-#endif
-	return OSA_SOK;
-}
 Void NotifyCbDsp(UInt16 procId, UInt16 lineId, UInt32 eventId, UArg arg,
                  UInt32 payload)
 {
-#if 0
-    if(payload == VALINK_EVT_STOP)
-    {
-        SendDMVAAlarmEventStop();
-    }
-    else
-    {
-        SendDMVAAlarmEventStart(payload);
-    }
-#else
 	Ptr ptBuf = NULL;
-    THOSTLprResualt *ptsOsdPayload = NULL;
+    TDSPLprResualt *ptsOsdPayload = NULL;
     ptBuf = SharedRegion_getPtr(payload);
-	ptsOsdPayload = (THOSTLprResualt *)ptBuf;
+	ptsOsdPayload = (TDSPLprResualt *)ptBuf;
+	struct timeval start,end;
 
 	if(ptsOsdPayload!=NULL){
 		if(ptsOsdPayload->payload == 0x00000001){
-			//OSA_printf("Addr = 0x%x, String=%s\n",ptsOsdPayload->frameAddr,ptsOsdPayload->resualtStr);
-			DramPlrInfoToFrame((Int32)SharedRegion_getPtr(ptsOsdPayload->frameAddr),ptsOsdPayload->resualtStr);
+			gettimeofday(&start, NULL); 
+			//HalCodecSetOsdDisplayLprInfo((Int32)SharedRegion_getPtr(ptsOsdPayload->frameAddr), &ptsOsdPayload->lprResult);
+			HalCodecSetOsdDisplayLprInfo(ptsOsdPayload->frameAddr, &ptsOsdPayload->lprResult);
+			gettimeofday(&end, NULL); 
+			//OSA_printf("HalCodecSetOsdDisplayLprInfo:%ld \n", end.tv_usec - start.tv_usec);
 		}
 	}
-
-#endif
 }
 
 extern int AlarmDrvInit(int proc_id);
@@ -654,7 +640,7 @@ int stream_update_vol(STREAM_PARM * pParm,int streamType)
  */
 int stream_write(void *pAddr, int size, int frame_type, int stream_type,
                  unsigned int timestamp, unsigned int temporalId,
-                 STREAM_PARM * pParm)
+                 char * license, STREAM_PARM * pParm)
 {
     VIDEO_BLK_INFO *pVidInfo = NULL;
 
@@ -719,6 +705,10 @@ int stream_write(void *pAddr, int size, int frame_type, int stream_type,
     pVidInfo->timestamp = timestamp;
     // pVidInfo->timestamp = GetTimeStamp();
     pVidInfo->temporalId = temporalId;
+    if(STREAM_MJPG == stream_type)
+    {
+        strcpy(pVidInfo->license, license);
+    }
 
     ret = MemMng_Video_Write(pAddr, size, frame_type, pVidInfo);
     if (ret < 0)
@@ -1200,6 +1190,10 @@ void *Msg_CTRL(void *args)
                         msgbuf.frame_info.frameType = pFrame->fram_type;
                         msgbuf.frame_info.timestamp = pFrame->timestamp;
                         msgbuf.frame_info.temporalId = pFrame->temporalId;
+						if(FMT_MJPEG == msgbuf.frame_info.format)
+						{
+							strcpy(msgbuf.frame_info.license, pFrame->license);
+						}
                         for (cnt = 0; cnt < VIDOE_INFO_END; cnt++)
                         {
                             msgbuf.frame_info.ref_serial[cnt] =

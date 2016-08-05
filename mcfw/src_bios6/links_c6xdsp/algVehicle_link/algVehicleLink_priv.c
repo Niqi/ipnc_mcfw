@@ -10,6 +10,9 @@
 
 #define UTILS_ALGVEHICLE_GET_OUTBUF_SIZE()   (sizeof(AlgVehicleLink_ThPlateIdResult))
 
+TDSPLprResualt *gTDSPLprResualt=NULL;
+SharedRegion_SRPtr gSRPtrTDSPLprResualt = NULL;
+
 
 static Int32 AlgVehicleLink_createOutObj(AlgVehicleLink_Obj * pObj)
 {
@@ -74,13 +77,6 @@ Int32 AlgVehicleLink_algDelete(AlgVehicleLink_Obj * pObj)
 
 	return FVID2_SOK;
 }
-typedef struct TagDSPLprResualt{
-    UInt32 payload;
-	Int32 frameAddr;
-	Int8 resualtStr[64];
-} TDSPLprResualt;
-TDSPLprResualt *gTDSPLprResualt=NULL;
-SharedRegion_SRPtr gSRPtrTDSPLprResualt = NULL;
 
 static Int32 Valink_OSDInitial(void)
 {
@@ -95,24 +91,29 @@ static Int32 Valink_OSDInitial(void)
 
 	gTDSPLprResualt->payload   = 0x00000001;
 	gTDSPLprResualt->frameAddr = 0x00000000;
-	memset(gTDSPLprResualt->resualtStr,0x00,sizeof(gTDSPLprResualt->resualtStr));
+	memset((void *)(&gTDSPLprResualt->lprResult), 0x00, sizeof(gTDSPLprResualt->lprResult));
 
 	return FVID2_SOK;
 }
-static Int32 Valink_CreatOSDFrame(Int32 frameAddr,const char *resString)
+
+static Int32 Valink_CreatOSDFrame(Int32 frameAddr,const TH_PlateIDResult *result)
 {
 	static Int32 bCreatPtr = FALSE;
 	Int32 notifystatus;
 
-	if(resString == NULL){
-		return FVID2_EFAIL;
-	}
 	if(bCreatPtr == FALSE){
 		bCreatPtr = TRUE;
 		Valink_OSDInitial();
 	}
 	gTDSPLprResualt->frameAddr = frameAddr;
-	memcpy(gTDSPLprResualt->resualtStr,resString,strlen(resString));
+	strcpy(gTDSPLprResualt->lprResult.license, result->license);
+	strcpy(gTDSPLprResualt->lprResult.color, result->color);	
+	gTDSPLprResualt->lprResult.nColor = result->nColor;
+	gTDSPLprResualt->lprResult.nType = result->nType;
+	gTDSPLprResualt->lprResult.nRectLeftX = result->rcLocation.left;
+	gTDSPLprResualt->lprResult.nRectLeftY = result->rcLocation.top;	
+	gTDSPLprResualt->lprResult.nRectWidth = result->rcLocation.right- result->rcLocation.left;
+	gTDSPLprResualt->lprResult.nRectHeight = result->rcLocation.bottom - result->rcLocation.top;	
 	notifystatus = Notify_sendEvent(System_getSyslinkProcId(SYSTEM_PROC_HOSTA8),
 			SYSTEM_IPC_NOTIFY_LINE_ID,
 			SYSTEM_IPC_NOTIFY_EVENT_ID_APP,
@@ -131,6 +132,7 @@ Int32 AlgVehicleLink_algProcessData(AlgVehicleLink_Obj * pObj)
 	Int32 procesFrames = 0;	
     AlgVehicleLink_ThPlateIdObj * pAlgObj;
     FVID2_Frame *pFullFrame;
+	System_FrameInfo *pInFrameInfo = NULL;
     UInt64 start,end;
 
     pAlgObj = &pObj->thPlateIdAlg;
@@ -155,15 +157,29 @@ Int32 AlgVehicleLink_algProcessData(AlgVehicleLink_Obj * pObj)
 
 				if( FVID2_SOK == status)
 				{
+					//Vps_printf("\n THPLATEIDALG:frameAddr:0x%08x \n", (Int32)pFullFrame->addr[0][0]);
 					if(pAlgObj->chObj[0].thPlateIdResult.thPlateIdResultAll[0].nConfidence > 50)
 					{
+						pAlgObj->chObj[0].inFrameProcessCount++;
+						if(1 == pAlgObj->chObj[0].inFrameProcessCount)//只输出第一个识别到的结果
+						{
+							pAlgObj->chObj[0].totalFrameCount = 0;
+							Valink_CreatOSDFrame((Int32)pFullFrame->addr[0][0], 
+													&(pAlgObj->chObj[0].thPlateIdResult.thPlateIdResultAll[0]));
 
-				        Vps_printf("\n THPLATEIDALG: Process frame, numVeh:%d, sn:%s, cl:%d, tp:%d, tm:%ld \n",
-				                        pAlgObj->chObj[0].thPlateIdResult.nNumberOfVehicle,
-				                        pAlgObj->chObj[0].thPlateIdResult.thPlateIdResultAll[0].license,
-				                        pAlgObj->chObj[0].thPlateIdResult.thPlateIdResultAll[0].nColor,
-				                        pAlgObj->chObj[0].thPlateIdResult.thPlateIdResultAll[0].nConfidence,
-				                        (end - start)/1000);			
+							pInFrameInfo = (System_FrameInfo *) pFullFrame->appData;
+							if(NULL != pInFrameInfo)
+							{
+								strcpy((char *)pInFrameInfo->license, (char *)pAlgObj->chObj[0].thPlateIdResult.thPlateIdResultAll[0].license);								
+							}
+							
+					        Vps_printf("\n THPLATEIDALG: Process frame, addr:%d, sn:%s, cl:%d, tp:%d, tm:%ld \n",
+											pFullFrame->timeStamp,
+					                        pAlgObj->chObj[0].thPlateIdResult.thPlateIdResultAll[0].license,
+					                        pAlgObj->chObj[0].thPlateIdResult.thPlateIdResultAll[0].nColor,
+					                        pAlgObj->chObj[0].thPlateIdResult.thPlateIdResultAll[0].nConfidence,
+					                        (end - start)/1000);						
+						}		
 					}					
 				}
 				else
@@ -180,6 +196,11 @@ Int32 AlgVehicleLink_algProcessData(AlgVehicleLink_Obj * pObj)
             pAlgObj->chObj[0].processFrCnt ++;
 			pAlgObj->chObj[0].totalFrameCount ++;
 
+			if(pAlgObj->chObj[0].totalFrameCount > 30)//30帧以内其它结果扔掉
+			{
+				pAlgObj->chObj[0].inFrameProcessCount = 0;
+			}
+
             if(pAlgObj->chObj[0].processFrCnt >= 200)
             {
                 Vps_printf(" %d: ALGVEHICLE: alg Avg Prc tm = %ld us/f, max:%ld !!!\n",
@@ -188,11 +209,19 @@ Int32 AlgVehicleLink_algProcessData(AlgVehicleLink_Obj * pObj)
                 pAlgObj->chObj[0].processFrCnt     = 0;
                 pAlgObj->chObj[0].totalProcessTime = 0;
             }
-			Valink_CreatOSDFrame((Int32)pFullFrame->addr[0][0],"123456");
-        	status = Utils_bufPutFullFrame(&pObj->outFrameQue, pFullFrame);
-        	UTILS_assert(status == FVID2_SOK);
+
+			if((1 == pAlgObj->chObj[0].inFrameProcessCount)&&(1 == pAlgObj->chObj[0].totalFrameCount))
+			{
+	        	status = Utils_bufPutFullFrame(&pObj->outFrameQue, pFullFrame);
+	        	UTILS_assert(status == FVID2_SOK);
+				System_sendLinkCmd(pObj->createArgs.outQueParams.nextLink, SYSTEM_CMD_NEW_DATA);
+			}
+			else
+			{
+	        	status = Utils_bufPutEmptyFrame(&pObj->processFrameQue, pFullFrame);
+	        	UTILS_assert(status == FVID2_SOK);				
+			}
 			
-			System_sendLinkCmd(pObj->createArgs.outQueParams.nextLink, SYSTEM_CMD_NEW_DATA);
 			procesFrames++;
         }
     } while ((status == FVID2_SOK) && (pFullFrame != NULL));
@@ -310,6 +339,8 @@ Int32 AlgVehicleLink_algCopyFrames(AlgVehicleLink_Obj *pObj)
 													edmaHeight/2);                 
 
                     pEmptyFrame->timeStamp = pFullFrame->timeStamp;
+
+					pEmptyFrame->channelNum = pFullFrame->channelNum;
 
                     /* put the buffer into full queue */
 #ifdef ALG_NO_PROCESS
