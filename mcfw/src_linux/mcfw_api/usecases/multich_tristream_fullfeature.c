@@ -175,6 +175,7 @@ Void MultiCh_createTriStreamFullFtr()
     CameraLink_VipInstParams *pCameraInstPrm;
     CameraLink_OutParams *pCameraOutPrm;
 
+    CommunicationLink_CreateParams ipcCommunicationPrm;
     UInt32 ipcOutVpssId;
     UInt32 ipcInVideoId;
     UInt32 dupId[NUM_DUP_LINK];
@@ -689,6 +690,10 @@ Void MultiCh_createTriStreamFullFtr()
     MultiCh_ipcBitsInitCreateParams_BitsInHLOS(&ipcBitsInHostPrm0);
 
     /* Links Creation */
+
+    /* communication Link */
+    System_linkCreate(SYSTEM_HOST_LINK_ID_IPC_COMMUNICATION, &ipcCommunicationPrm, sizeof(ipcCommunicationPrm));
+
     /* Camera Link */
     System_linkCreate(gVcamModuleContext.cameraId, &cameraPrm, sizeof(cameraPrm));
     System_linkControl(gVcamModuleContext.cameraId, CAMERA_LINK_CMD_DETECT_VIDEO, NULL, 0, TRUE);
@@ -841,6 +846,9 @@ Void MultiCh_deleteTriStreamFullFtr()
 
     /* Camera Link */
     System_linkDelete(gVcamModuleContext.cameraId);
+
+	/* communication Link */
+	System_linkDelete(SYSTEM_HOST_LINK_ID_IPC_COMMUNICATION);
 
     /* Print the HWI, SWI and all tasks load */
     /* Reset the accumulated timer ticks */

@@ -264,7 +264,7 @@ int stream_end(STREAM_PARM * pParm);
 int App_msgHandlerInit(STREAM_PARM *pParm);
 int App_msgHandlerExit(STREAM_PARM *pParm);
 
-Int32 HalCodecSetOsdDisplayTime(UInt8 u8Enable, UInt32 u32X, UInt32 u32Y);
+Int32 HalCodecSetOsdDisplayTime(UInt8 u8EnableSteam0, UInt8 u8EnableSteam1, UInt32 u32X, UInt32 u32Y);
 
 #ifdef __cplusplus
 }

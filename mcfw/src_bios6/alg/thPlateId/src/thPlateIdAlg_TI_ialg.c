@@ -312,11 +312,11 @@ THPLATEIDALG_TI_process(void        *handle,
         THPLATEIDALG_TI_DMA_FastWait(&obj->dmaHandle);
         ECPY_deactivate(obj->ecpyHandle[THPLATEIDALG_DMA_CH_ALP]);    
     }
-#if 0
+
     Cache_inv(pFrameBufY,
                     (thPlateIdAlgChParams->width * thPlateIdAlgChParams->height * 3 /2),
                     Cache_Type_ALL, TRUE);    
-#endif
+
     if(1)
     {
     	

@@ -50,6 +50,8 @@ extern "C" {
 
 /* thPlateId header */
 #include <mcfw/interfaces/link_api/algVehicleLink.h>
+#include <mcfw/interfaces/link_api/communicationIpcLink.h>
+
 
 #include <ti/syslink/utils/IHeap.h>
 #include <ti/syslink/utils/Memory.h>

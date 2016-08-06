@@ -70,7 +70,7 @@ typedef struct TagOSD_Char_Swosd{
     Int32 textPosX;
     Int32 textPosY;
     Int32 fontsize;
-    Int32   frameAddr;
+    UInt32   timeStamp;
     Int16	nRectLeftX;
     Int16	nRectLeftY;
     Int16	nRectWidth;

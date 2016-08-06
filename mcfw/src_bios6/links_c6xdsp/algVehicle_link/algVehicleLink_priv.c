@@ -90,22 +90,23 @@ static Int32 Valink_OSDInitial(void)
 	gSRPtrTDSPLprResualt = SharedRegion_getSRPtr(buf, 0);
 
 	gTDSPLprResualt->payload   = 0x00000001;
-	gTDSPLprResualt->frameAddr = 0x00000000;
+	gTDSPLprResualt->timeStamp = 0x00000000;
 	memset((void *)(&gTDSPLprResualt->lprResult), 0x00, sizeof(gTDSPLprResualt->lprResult));
 
 	return FVID2_SOK;
 }
 
-static Int32 Valink_CreatOSDFrame(Int32 frameAddr,const TH_PlateIDResult *result)
+static Int32 Valink_CreatOSDFrame(UInt32 timeStamp,const TH_PlateIDResult *result)
 {
 	static Int32 bCreatPtr = FALSE;
+#if 0
 	Int32 notifystatus;
-
+#endif
 	if(bCreatPtr == FALSE){
 		bCreatPtr = TRUE;
 		Valink_OSDInitial();
 	}
-	gTDSPLprResualt->frameAddr = frameAddr;
+	gTDSPLprResualt->timeStamp = timeStamp;
 	strcpy(gTDSPLprResualt->lprResult.license, result->license);
 	strcpy(gTDSPLprResualt->lprResult.color, result->color);	
 	gTDSPLprResualt->lprResult.nColor = result->nColor;
@@ -113,7 +114,8 @@ static Int32 Valink_CreatOSDFrame(Int32 frameAddr,const TH_PlateIDResult *result
 	gTDSPLprResualt->lprResult.nRectLeftX = result->rcLocation.left;
 	gTDSPLprResualt->lprResult.nRectLeftY = result->rcLocation.top;	
 	gTDSPLprResualt->lprResult.nRectWidth = result->rcLocation.right- result->rcLocation.left;
-	gTDSPLprResualt->lprResult.nRectHeight = result->rcLocation.bottom - result->rcLocation.top;	
+	gTDSPLprResualt->lprResult.nRectHeight = result->rcLocation.bottom - result->rcLocation.top;
+#if 0		
 	notifystatus = Notify_sendEvent(System_getSyslinkProcId(SYSTEM_PROC_HOSTA8),
 			SYSTEM_IPC_NOTIFY_LINE_ID,
 			SYSTEM_IPC_NOTIFY_EVENT_ID_APP,
@@ -122,20 +124,25 @@ static Int32 Valink_CreatOSDFrame(Int32 frameAddr,const TH_PlateIDResult *result
 	if(notifystatus != Notify_S_SUCCESS){
 		return FVID2_EFAIL;
 	}
-
+#else
+	System_linkControl(SYSTEM_HOST_LINK_ID_IPC_COMMUNICATION, SYSTEM_CMD_NEW_DATA,
+				gTDSPLprResualt, sizeof(TDSPLprResualt),TRUE);
+#endif
 	return FVID2_SOK;
 }
 
 Int32 AlgVehicleLink_algProcessData(AlgVehicleLink_Obj * pObj)
 {
-    UInt32 status = FVID2_SOK;
-	Int32 procesFrames = 0;	
+    UInt32 status = FVID2_SOK;	
     AlgVehicleLink_ThPlateIdObj * pAlgObj;
     FVID2_Frame *pFullFrame;
 	System_FrameInfo *pInFrameInfo = NULL;
     UInt64 start,end;
+	TH_PlateIDResult *thPlateResult = NULL;
+	Int32 thPlateRectCenterX, thPlateRectCenterY;
 
     pAlgObj = &pObj->thPlateIdAlg;
+	thPlateResult = &pAlgObj->chObj[0].thPlateIdResult.thPlateIdResultAll[0];
 
     do
     {
@@ -157,28 +164,36 @@ Int32 AlgVehicleLink_algProcessData(AlgVehicleLink_Obj * pObj)
 
 				if( FVID2_SOK == status)
 				{
-					//Vps_printf("\n THPLATEIDALG:frameAddr:0x%08x \n", (Int32)pFullFrame->addr[0][0]);
-					if(pAlgObj->chObj[0].thPlateIdResult.thPlateIdResultAll[0].nConfidence > 50)
+					if(thPlateResult->nConfidence > 50)
 					{
-						pAlgObj->chObj[0].inFrameProcessCount++;
-						if(1 == pAlgObj->chObj[0].inFrameProcessCount)//只输出第一个识别到的结果
+						//Vps_printf("\n THPLATEIDALG: %ld \n", end - start);
+						thPlateRectCenterX = (thPlateResult->rcLocation.left + thPlateResult->rcLocation.right)>>1;
+						thPlateRectCenterY = (thPlateResult->rcLocation.top+ thPlateResult->rcLocation.bottom)>>1;
+						
+						if( (thPlateRectCenterX < pAlgObj->chParams[0].rcTrig.right 
+								&& thPlateRectCenterX > pAlgObj->chParams[0].rcTrig.left)
+							&& (thPlateRectCenterY > pAlgObj->chParams[0].rcTrig.top 
+								&& thPlateRectCenterY < pAlgObj->chParams[0].rcTrig.bottom) )
 						{
-							pAlgObj->chObj[0].totalFrameCount = 0;
-							Valink_CreatOSDFrame((Int32)pFullFrame->addr[0][0], 
-													&(pAlgObj->chObj[0].thPlateIdResult.thPlateIdResultAll[0]));
-
-							pInFrameInfo = (System_FrameInfo *) pFullFrame->appData;
-							if(NULL != pInFrameInfo)
+							pAlgObj->chObj[0].inFrameProcessCount++;
+							if(1 == pAlgObj->chObj[0].inFrameProcessCount)
 							{
-								strcpy((char *)pInFrameInfo->license, (char *)pAlgObj->chObj[0].thPlateIdResult.thPlateIdResultAll[0].license);								
-							}
-							
-					        Vps_printf("\n THPLATEIDALG: Process frame, addr:%d, sn:%s, cl:%d, tp:%d, tm:%ld \n",
-											pFullFrame->timeStamp,
-					                        pAlgObj->chObj[0].thPlateIdResult.thPlateIdResultAll[0].license,
-					                        pAlgObj->chObj[0].thPlateIdResult.thPlateIdResultAll[0].nColor,
-					                        pAlgObj->chObj[0].thPlateIdResult.thPlateIdResultAll[0].nConfidence,
-					                        (end - start)/1000);						
+								pAlgObj->chObj[0].totalFrameCount = 0; 
+								Valink_CreatOSDFrame(pFullFrame->timeStamp, thPlateResult); 
+
+								pInFrameInfo = (System_FrameInfo *) pFullFrame->appData;
+								if(NULL != pInFrameInfo)
+								{
+									strcpy((char *)pInFrameInfo->license, thPlateResult->license);							
+								}
+								
+						        Vps_printf("\n THPLATEIDALG: Process frame, ts:%d, sn:%s, cl:%d, tp:%d, tm:%ld \n",
+												pFullFrame->timeStamp,
+						                        thPlateResult->license,
+						                        thPlateResult->nColor,
+						                        thPlateResult->nConfidence,
+						                        (end - start)/1000);							
+							}						
 						}		
 					}					
 				}
@@ -186,7 +201,7 @@ Int32 AlgVehicleLink_algProcessData(AlgVehicleLink_Obj * pObj)
 				{
 					Vps_printf("\n THPLATEIDALG: Process fail! \n");
 				}
-            }
+            }									
         
             if((end - start) > pAlgObj->chObj[0].maxProcessTime)
             {
@@ -194,9 +209,8 @@ Int32 AlgVehicleLink_algProcessData(AlgVehicleLink_Obj * pObj)
             }
             pAlgObj->chObj[0].totalProcessTime += (end - start);
             pAlgObj->chObj[0].processFrCnt ++;
-			pAlgObj->chObj[0].totalFrameCount ++;
 
-			if(pAlgObj->chObj[0].totalFrameCount > 30)//30帧以内其它结果扔掉
+			if(pAlgObj->chObj[0].totalFrameCount > 90)//90帧以内其它结果扔掉
 			{
 				pAlgObj->chObj[0].inFrameProcessCount = 0;
 			}
@@ -210,8 +224,8 @@ Int32 AlgVehicleLink_algProcessData(AlgVehicleLink_Obj * pObj)
                 pAlgObj->chObj[0].totalProcessTime = 0;
             }
 
-			if((1 == pAlgObj->chObj[0].inFrameProcessCount)&&(1 == pAlgObj->chObj[0].totalFrameCount))
-			{
+			if((1 == pAlgObj->chObj[0].inFrameProcessCount)&&(0 == pAlgObj->chObj[0].totalFrameCount))
+			{		
 	        	status = Utils_bufPutFullFrame(&pObj->outFrameQue, pFullFrame);
 	        	UTILS_assert(status == FVID2_SOK);
 				System_sendLinkCmd(pObj->createArgs.outQueParams.nextLink, SYSTEM_CMD_NEW_DATA);
@@ -221,16 +235,10 @@ Int32 AlgVehicleLink_algProcessData(AlgVehicleLink_Obj * pObj)
 	        	status = Utils_bufPutEmptyFrame(&pObj->processFrameQue, pFullFrame);
 	        	UTILS_assert(status == FVID2_SOK);				
 			}
-			
-			procesFrames++;
+
+			pAlgObj->chObj[0].totalFrameCount ++;			
         }
     } while ((status == FVID2_SOK) && (pFullFrame != NULL));
-
-	if(procesFrames){
-	    /* send SYSTEM_CMD_NEW_DATA to next link */
-		//Vps_rprintf("%s %d\n",__FUNCTION__,__LINE__);
-	    //System_sendLinkCmd(pObj->createArgs.outQueParams.nextLink, SYSTEM_CMD_NEW_DATA);
-	}
 
     return FVID2_SOK;
 }

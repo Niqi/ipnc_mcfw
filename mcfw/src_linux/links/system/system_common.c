@@ -10,6 +10,8 @@
 #include "system_priv_ipc.h"
 #include <mcfw/interfaces/link_api/ipcLink.h>
 #include <mcfw/interfaces/link_api/glbceSupportLink.h>
+#include <mcfw/interfaces/link_api/communicationIpcLink.h>
+
 
 System_CommonObj gSystem_objCommon;
 
@@ -69,6 +71,7 @@ Int32 System_init()
 
     System_ipcInit();
 
+	IpcCommunicationLink_init();
     IpcBitsInLink_init();
     IpcBitsOutLink_init();
     IpcFramesInLink_init();
@@ -98,6 +101,7 @@ Int32 System_deInit()
     SystemLink_deInit();
 
     GlbceSupportLink_deInit();	
+    IpcCommunicationLink_deInit();		
 	IpcBitsInLink_deInit();
     IpcBitsOutLink_deInit();
     IpcFramesInLink_deInit();

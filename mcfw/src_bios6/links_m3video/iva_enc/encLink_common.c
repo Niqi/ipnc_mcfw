@@ -1545,7 +1545,11 @@ static Int32 EncLink_codecSubmitData(EncLink_Obj * pObj)
                 numProcessCh++;
                 pChObj->forceAvoidSkipFrame = FALSE;
 
-                strcpy((char *)pOutBuf->license, (char *)pInFrameInfo->license);
+                if(2 == pInFrame->channelNum)
+                {	
+                	//Vps_printf("ENC:%d \n", pInFrame->timeStamp);
+                    strcpy((char *)pOutBuf->license, (char *)pInFrameInfo->license);
+                }
 
                 status =
                     Utils_quePut(&pObj->encProcessTsk[tskId].processQue,

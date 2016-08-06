@@ -26,6 +26,7 @@ link_api:
 	make -fMAKEFILE.MK -C$(MCFW_ROOT_PATH)/mcfw/src_linux/links/ipcFramesOut MODULE=ipnc_rdk_link_api $(TARGET)
 	make -fMAKEFILE.MK -C$(MCFW_ROOT_PATH)/mcfw/src_linux/links/avsync MODULE=ipnc_rdk_link_api $(TARGET)
 	make -fMAKEFILE.MK -C$(MCFW_ROOT_PATH)/mcfw/src_linux/links/glbceSupport MODULE=ipnc_rdk_link_api $(TARGET)
+	make -fMAKEFILE.MK -C$(MCFW_ROOT_PATH)/mcfw/src_linux/links/ipcCommnication MODULE=ipnc_rdk_link_api $(TARGET)
 
 osa:
 	make -C$(MCFW_ROOT_PATH)/mcfw/src_linux/osa_kermod/build $(TARGET)

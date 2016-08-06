@@ -69,7 +69,7 @@ typedef struct {
 
 typedef struct TagDSPLprResualt{
     UInt32 payload;
-    Int32 frameAddr;
+    UInt32 timeStamp;
     DSP_LPR_RESULT lprResult;
 } TDSPLprResualt;
 
@@ -155,6 +155,7 @@ typedef struct
     int pnMinFreeSDRAM;
 
     TH_RECT rcDetect;
+    TH_RECT rcTrig;
     
 } AlgVehicleLink_ThPlateIdChParams;
 
@@ -283,10 +284,15 @@ static inline void AlgVehicleLink_CreateParams_Init(AlgVehicleLink_CreateParams 
     pPrm->thPlateIdCreateParams.chDefaultParams[0].pnMinFreeSDRAM = 0;
     pPrm->thPlateIdCreateParams.chDefaultParams[0].pnMinFreeSRAM = 0;
    
-    pPrm->thPlateIdCreateParams.chDefaultParams[0].rcDetect.top = 50;
-    pPrm->thPlateIdCreateParams.chDefaultParams[0].rcDetect.bottom = 1080 - 50;
-    pPrm->thPlateIdCreateParams.chDefaultParams[0].rcDetect.left = 50;
-    pPrm->thPlateIdCreateParams.chDefaultParams[0].rcDetect.right = 1920 - 50;
+    pPrm->thPlateIdCreateParams.chDefaultParams[0].rcDetect.top = 200;
+    pPrm->thPlateIdCreateParams.chDefaultParams[0].rcDetect.bottom = 1080 - 200;
+    pPrm->thPlateIdCreateParams.chDefaultParams[0].rcDetect.left = 300;
+    pPrm->thPlateIdCreateParams.chDefaultParams[0].rcDetect.right = 1920 - 300;
+
+    pPrm->thPlateIdCreateParams.chDefaultParams[0].rcTrig.top = 400;
+    pPrm->thPlateIdCreateParams.chDefaultParams[0].rcTrig.bottom = 1080 - 400;
+    pPrm->thPlateIdCreateParams.chDefaultParams[0].rcTrig.left = 200;
+    pPrm->thPlateIdCreateParams.chDefaultParams[0].rcTrig.right = 1920 - 200;	
 
     pPrm->thPlateIdCreateParams.numBufPerCh = 1 ;
     pPrm->thPlateIdCreateParams.numValidChForTHPLATEID = 1;

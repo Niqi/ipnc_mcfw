@@ -525,10 +525,7 @@ static Void IpcFramesOutLink_copyFrameInfo(IpcFramesOutLink_Obj * pObj,
         dst->frameHeight = frmInfo->rtChInfo.height;
         dst->framePitch[0] = frmInfo->rtChInfo.pitch[0];
         dst->framePitch[1] = frmInfo->rtChInfo.pitch[1];
-        if(2 == src->channelNum)
-        {
-            strcpy((char *)dst->license, (char *)frmInfo->license);
-        }
+        strcpy((char *)dst->license, (char *)frmInfo->license);
     }
 }
 

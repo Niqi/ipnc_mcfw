@@ -232,7 +232,7 @@ void SwosdLink_CopyOsdInfoMem(TSWOSD_Char *dst_Osd, TSWOSD_Char *src_Osd, int si
 	TSWOSD_Char *dst_ptr = (TSWOSD_Char *)dst_Osd;
 	TSWOSD_Char *src_ptr = (TSWOSD_Char *)src_Osd;
 
-	dst_Osd->frameAddr   = src_Osd->frameAddr;	
+	dst_Osd->timeStamp   = src_Osd->timeStamp;	
 	dst_Osd->nRectLeftX  = src_Osd->nRectLeftX;
 	dst_Osd->nRectLeftY  = src_Osd->nRectLeftY;
 	dst_Osd->nRectWidth  = src_Osd->nRectWidth;
@@ -293,7 +293,7 @@ Int32 SwosdLink_SaveTimeInfo(Utils_MsgHndl *pMsg, UInt32 cmd)
 
 
 /* Draw the plate rectangles */
-Int32 DM812X_PLATE_RECT_Draw(FVID2_Frame *pFrame, TSWOSD_Char *bmp_time,
+static Int32 DM812X_PLATE_RECT_Draw(FVID2_Frame *pFrame, TSWOSD_Char *bmp_time,
                      			UInt32 frameWidth, UInt32 frameHeight,
                      			UInt32 frameDataFormat, UInt32 framePitch,
                      			UInt32 codingFormat)
@@ -333,7 +333,50 @@ Int32 DM812X_PLATE_RECT_Draw(FVID2_Frame *pFrame, TSWOSD_Char *bmp_time,
 }
 
 
-void SwosdLink_auxSetOsdTime(FVID2_Frame *pFrame,int Width, int Height,
+/* Draw the trigger rectangles */
+static Int32 DM812X_TRIG_RECT_Draw(int streamId, Ptr frameAddrY, Ptr frameAddrUV,
+                     UInt32 frameWidth, UInt32 frameHeight,
+                     UInt32 frameDataFormat, UInt32 framePitch,
+                     UInt32 codingFormat)
+{
+    DRAW_InFrame_Info_t inFrameInfo;
+
+    DRAW_Rect_Info_t rectInfo;
+
+	if(1 == streamId)
+	{
+	    /* input frame info */
+	    inFrameInfo.videoInOutAddrY = (UInt8 *) frameAddrY;
+	    inFrameInfo.videoInOutAddrUV = (UInt8 *) frameAddrUV;
+	    inFrameInfo.videoWidth = frameWidth;
+	    inFrameInfo.videoHeight = frameHeight;
+	    inFrameInfo.videoOffsetH = framePitch;
+	    inFrameInfo.videoOffsetV = frameHeight;
+	    inFrameInfo.videoDataFormat = frameDataFormat;
+	    inFrameInfo.maskEnable = 0;
+
+	    rectInfo.colorY = 0xFF;
+	    rectInfo.colorC = 0x80;
+	    rectInfo.thickness = 4;
+
+		rectInfo.startX = (UInt32)(200 * 0.375);// 720/1920=0.375
+		rectInfo.startY = (UInt32)(400 * 0.444);// 480/1080=0.444
+		rectInfo.width = 720 - rectInfo.startX*2;
+		rectInfo.height = 480 - rectInfo.startY*2;
+
+	    //Semaphore_pend(pAlgHndl->fdDrawSem, BIOS_WAIT_FOREVER);
+	    
+	    /* Draw the rectangles */
+	    DM812X_DRAW_rectangle(&inFrameInfo, &rectInfo, framePitch);
+
+	    //Semaphore_post(pAlgHndl->fdDrawSem);
+	}
+
+    return FVID2_SOK;
+}
+
+
+Int32 SwosdLink_auxSetOsdTime(FVID2_Frame *pFrame,int Width, int Height,
 	                     		UInt32 frameDataFormat, UInt32 framePitch,
                      			UInt32 codingFormat)
 {
@@ -353,7 +396,7 @@ void SwosdLink_auxSetOsdTime(FVID2_Frame *pFrame,int Width, int Height,
 		if(2 != pFrame->channelNum){
 			if (22 > displayInfo->len){
 				Vps_printf("SwosdLink_auxSetOsdTime: ERROR!! Time info length error, len: %d.!!!\n", displayInfo->len);
-				return;
+				return FVID2_EFAIL;
 			}
 			if (0 == pFrame->channelNum){
 				//displayInfo->textPosX = 0;
@@ -376,9 +419,12 @@ void SwosdLink_auxSetOsdTime(FVID2_Frame *pFrame,int Width, int Height,
 			Width = 1920;
 			OSD_textShow(displayInfo->textPosX,displayInfo->textPosY, displayInfo,
 				(unsigned char *)pFrame->addr[0][0],Width,Height);
-
-			//Vps_rprintf("SWOSD: frameAddr:0x%08x, alg:0x%08x \n", (Int32)pFrame->addr[0][0], displayInfo->frameAddr);
 			
+			if(pFrame->timeStamp != displayInfo->timeStamp)
+			{
+				Vps_rprintf("SWOSD: timeStamp:%d, alg:%d \n", pFrame->timeStamp, displayInfo->timeStamp);
+			}
+			//Vps_rprintf("SWOSD: timeStamp:%d, alg:%d \n", pFrame->timeStamp, displayInfo->timeStamp);
 			DM812X_PLATE_RECT_Draw(pFrame, displayInfo,	
                         Width,
                         Height,
@@ -388,6 +434,7 @@ void SwosdLink_auxSetOsdTime(FVID2_Frame *pFrame,int Width, int Height,
 			displayInfo->flag = FALSE;
 		}
 	}
+	return FVID2_SOK;
 }
 
 
@@ -700,7 +747,8 @@ Int32 SwosdLink_processFrames(SwosdLink_Obj * pObj)
 			}
 			
             /* Draw the faces for FD */
-            status = DM812X_FD_Draw(pFullFrame->channelNum,
+            //status = DM812X_FD_Draw(pFullFrame->channelNum,
+            status = DM812X_TRIG_RECT_Draw(pFullFrame->channelNum,
                                     fullFrameAddrY, 	
                                     fullFrameAddrUV,	
                                     Width,

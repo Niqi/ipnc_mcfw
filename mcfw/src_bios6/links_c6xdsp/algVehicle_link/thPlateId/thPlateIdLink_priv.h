@@ -70,6 +70,7 @@ typedef struct
     int pnMinFreeSDRAM; 
 
     TH_RECT rcDetect;
+    TH_RECT rcTrig;
 
 } AlgVehicleLink_ThPlateIdchPrm;
 

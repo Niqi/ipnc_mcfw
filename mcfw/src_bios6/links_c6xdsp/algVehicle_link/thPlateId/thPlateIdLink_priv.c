@@ -314,7 +314,12 @@ static Int32 AlgVehicleLink_ThPlateIdalgSetChPrm(AlgVehicleLink_ThPlateIdchPrm  
     pThPlateIdChPrm->rcDetect.top =         params->rcDetect.top;
     pThPlateIdChPrm->rcDetect.bottom =    params->rcDetect.bottom;
     pThPlateIdChPrm->rcDetect.left =         params->rcDetect.left;
-    pThPlateIdChPrm->rcDetect.right =       params->rcDetect.right;    
+    pThPlateIdChPrm->rcDetect.right =       params->rcDetect.right;  
+
+    pThPlateIdChPrm->rcTrig.top =         params->rcTrig.top;
+    pThPlateIdChPrm->rcTrig.bottom =    params->rcTrig.bottom;
+    pThPlateIdChPrm->rcTrig.left =         params->rcTrig.left;
+    pThPlateIdChPrm->rcTrig.right =       params->rcTrig.right;	
 
     Vps_printf( "THPLATEIDLINK    :SetChPrm\n");
  

@@ -172,7 +172,7 @@ static Int32 GetStrToBmpNum(const Int8 *str, Int32 len, Int32 *num)
 	return OSA_SOK;
 }
 
-Int32 HalCodecSetOsdDisplayTime(UInt8 u8Enable, UInt32 u32X, UInt32 u32Y)
+Int32 HalCodecSetOsdDisplayTime(UInt8 u8EnableSteam0, UInt8 u8EnableSteam1, UInt32 u32X, UInt32 u32Y)
 {
 	Int32 Int32Ret = FAILURE;
 	Int32 strBmpNum = 0;
@@ -183,7 +183,7 @@ Int32 HalCodecSetOsdDisplayTime(UInt8 u8Enable, UInt32 u32X, UInt32 u32Y)
 		0xc3,0xeb,0xd0,0xc7,0xc6,0xda,0xc8,0xd5,0xd2,0xbb,0xb6,0xfe,0xc8,0xfd,0xcb,
 		0xc4,0xce,0xe5,0xc1,0xf9};
 
-    OSA_printf("HalCodecSetOsdDisplayTime: u8Enable = %d u32X = %d u32Y = %d\n\n",u8Enable, u32X, u32Y);
+    //OSA_printf("HalCodecSetOsdDisplayTime: u8Enable = %d u32X = %d u32Y = %d\n\n",u8EnableSteam0, u32X, u32Y);
 
     Int32X = (Int32)u32X;
     Int32Y = (Int32)u32Y;
@@ -206,7 +206,7 @@ Int32 HalCodecSetOsdDisplayTime(UInt8 u8Enable, UInt32 u32X, UInt32 u32Y)
 	g_atOSDprm_datetime.bmp->fontsize = g_fontsize;
 	g_atOSDprm_datetime.bmp->textPosX = Int32X;
 	g_atOSDprm_datetime.bmp->textPosY = Int32Y;
-	g_atOSDprm_datetime.bmp->flag     = (char)u8Enable;
+	g_atOSDprm_datetime.bmp->flag     = (char)u8EnableSteam0;
 	Int32Ret = Str2Bmp_String2BmpBuffer(datetime, sizeof(datetime), &g_atOSDprm_datetime.bmp, OSD_MENU_1080P);
 	if(Int32Ret != OSA_SOK){
 		OSA_ERROR("Str2Bmp_String2BmpBuffer!\n");
@@ -232,7 +232,7 @@ Int32 HalCodecSetOsdDisplayTime(UInt8 u8Enable, UInt32 u32X, UInt32 u32Y)
 	g_atOSDprm_datetime.bmp->fontsize = 0;
 	g_atOSDprm_datetime.bmp->textPosX = Int32X;
 	g_atOSDprm_datetime.bmp->textPosY = Int32Y;
-	g_atOSDprm_datetime.bmp->flag     = (char)u8Enable;
+	g_atOSDprm_datetime.bmp->flag     = (char)u8EnableSteam1;
 	Int32Ret = Str2Bmp_String2BmpBuffer(datetime, sizeof(datetime), &g_atOSDprm_datetime.bmp, OSD_MENU_D1);
 	if(Int32Ret != OSA_SOK){
 		OSA_ERROR("Str2Bmp_String2BmpBuffer!\n");
@@ -269,7 +269,7 @@ static Int32 getCurTimeInString(Int8 *str)
 	return OSA_SOK;
 }
 
-Int32 HalCodecSetOsdDisplayLprInfo(Int32 frameAddr, DSP_LPR_RESULT *result)
+Int32 HalCodecSetOsdDisplayLprInfo(UInt32 timeStamp, DSP_LPR_RESULT *result)
 {
 	Int32 Int32Ret = FAILURE;
 	Int32 strBmpNum = 0;
@@ -307,7 +307,7 @@ Int32 HalCodecSetOsdDisplayLprInfo(Int32 frameAddr, DSP_LPR_RESULT *result)
 	g_atOSDprm_lprInfo.bmp->textPosX = 20;
 	g_atOSDprm_lprInfo.bmp->textPosY = 20;
 	g_atOSDprm_lprInfo.bmp->flag     = TRUE;
-	g_atOSDprm_lprInfo.bmp->frameAddr = frameAddr;
+	g_atOSDprm_lprInfo.bmp->timeStamp = timeStamp;
 	g_atOSDprm_lprInfo.bmp->nRectLeftX = result->nRectLeftX;
 	g_atOSDprm_lprInfo.bmp->nRectLeftY = result->nRectLeftY;
 	g_atOSDprm_lprInfo.bmp->nRectWidth= result->nRectWidth;
@@ -407,7 +407,7 @@ Void NotifyCbDsp(UInt16 procId, UInt16 lineId, UInt32 eventId, UArg arg,
 		if(ptsOsdPayload->payload == 0x00000001){
 			gettimeofday(&start, NULL); 
 			//HalCodecSetOsdDisplayLprInfo((Int32)SharedRegion_getPtr(ptsOsdPayload->frameAddr), &ptsOsdPayload->lprResult);
-			HalCodecSetOsdDisplayLprInfo(ptsOsdPayload->frameAddr, &ptsOsdPayload->lprResult);
+			HalCodecSetOsdDisplayLprInfo(ptsOsdPayload->timeStamp, &ptsOsdPayload->lprResult);
 			gettimeofday(&end, NULL); 
 			//OSA_printf("HalCodecSetOsdDisplayLprInfo:%ld \n", end.tv_usec - start.tv_usec);
 		}
