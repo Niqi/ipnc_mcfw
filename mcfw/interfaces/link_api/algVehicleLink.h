@@ -42,20 +42,24 @@ extern "C" {
 /**
     \brief Link CMD: Configure THPLATEID params
 */
-#define ALGVEHICLE_LINK_THPLATEID_CMD_INIT_PLATEIDSDK                               (0x8001)
-#define ALGVEHICLE_LINK_THPLATEID_CMD_DEINIT_PLATEIDSDK                           (0x8002)
-#define ALGVEHICLE_LINK_THPLATEID_CMD_SET_IMAGE_FORMAT                            (0x8003)
-#define ALGVEHICLE_LINK_THPLATEID_CMD_SET_ENABLED_PLATE_FORMAT             (0x8004)
-#define ALGVEHICLE_LINK_THPLATEID_CMD_SET_RECOGTHRESHOLD                         (0x8005)
-#define ALGVEHICLE_LINK_THPLATEID_CMD_SET_PROVINCE_ORDER                         (0x8006)
-#define ALGVEHICLE_LINK_THPLATEID_CMD_SET_ENLARGE_MODE                             (0x8007)
-#define ALGVEHICLE_LINK_THPLATEID_CMD_SET_CONTRAST                                      (0x8008)
-#define ALGVEHICLE_LINK_THPLATEID_CMD_SET_ENABLE_LEAN_CORRECTION          (0x8009)
-#define ALGVEHICLE_LINK_THPLATEID_CMD_SET_ENABLED_SHADOW                        (0x800a)
-#define ALGVEHICLE_LINK_THPLATEID_CMD_SET_RECOG_REGION                              (0x800b)
-#define ALGVEHICLE_LINK_THPLATEID_CMD_PRINT_STATISTICS                                (0x800c)
+#define ALGVEHICLE_LINK_THPLATEID_CMD_INIT_PLATEIDSDK							(0x8001)
+#define ALGVEHICLE_LINK_THPLATEID_CMD_DEINIT_PLATEIDSDK							(0x8002)
+#define ALGVEHICLE_LINK_THPLATEID_CMD_SET_IMAGE_FORMAT							(0x8003)
+#define ALGVEHICLE_LINK_THPLATEID_CMD_SET_ENABLED_PLATE_FORMAT					(0x8004)
+#define ALGVEHICLE_LINK_THPLATEID_CMD_SET_RECOGTHRESHOLD						(0x8005)
+#define ALGVEHICLE_LINK_THPLATEID_CMD_SET_PROVINCE_ORDER						(0x8006)
+#define ALGVEHICLE_LINK_THPLATEID_CMD_SET_ENLARGE_MODE							(0x8007)
+#define ALGVEHICLE_LINK_THPLATEID_CMD_SET_CONTRAST								(0x8008)
+#define ALGVEHICLE_LINK_THPLATEID_CMD_SET_ENABLE_LEAN_CORRECTION				(0x8009)
+#define ALGVEHICLE_LINK_THPLATEID_CMD_SET_ENABLED_SHADOW						(0x800a)
+#define ALGVEHICLE_LINK_THPLATEID_CMD_SET_RECOG_AREA							(0x800b)
+#define ALGVEHICLE_LINK_THPLATEID_CMD_SET_TRIGG_AREA							(0x800c)
+#define ALGVEHICLE_LINK_THPLATEID_CMD_PRINT_STATISTICS							(0x800d)
 
 
+/**
+    \brief ThPlateId result parameters for application interface
+*/
 typedef struct {
 	char	license[16];	// 车牌字符串
 	char	color[8];		// 车牌颜色
@@ -75,6 +79,38 @@ typedef struct TagDSPLprResualt{
 
 
 /**
+    \brief ThPlateId Dynamic parameters for application interface 
+*/
+#define ALGVEHICLE_LINK_MAX_POLYGON_POINT_NUMBER 4
+
+typedef struct
+{
+	int x;
+	int y;
+} AlgLprPoint;
+
+typedef struct 
+{
+	AlgLprPoint arr[4];//0,1,2,3 左上角为0，依次按顺时针排序4个点组成的四边形
+} AlgLprPolygonArea;
+
+typedef struct
+{
+	unsigned int chId;			// 通道ID
+	char szProvince[16];		// 默认省份	
+	int nTrigerMode;			// 识别结果输出触发模式
+	int nTriggerInterval;		// 相同车牌触发时间间隔	
+	int nPlateTypeSupt;			// 支持的车牌类型
+	int nMaxPlateWidth;			// 检测的最大车牌宽度，以像素为单位//
+	int nMinPlateWidth;			// 检测的最小车牌宽度，以像素为单位//
+	int nVehicleDirection;		// 车辆通过方向
+	AlgLprPolygonArea recogArea;// 识别区域//
+	AlgLprPolygonArea trigArea;	// 触发区域(虚拟线圈)
+	
+} AlgVehicleLink_ThPlateIdDynParams;
+
+
+/**
     \brief ThPlateId channel control
 
     Defines variables to consume ThPlateId-generated metadata to 
@@ -91,22 +127,6 @@ typedef struct
 
 } AlgVehicleLink_ThPlateIdChStatus;
 
-typedef enum
-{
-    ALGVEHICLE_LINK_THPLATEID_SET_INIT = 0,
-    ALGVEHICLE_LINK_THPLATEID_SET_DEINIT = 1,    
-    ALGVEHICLE_LINK_THPLATEID_SET_IMAGE_FORMAT  = 2,
-    ALGVEHICLE_LINK_THPLATEID_SET_ENLARGE_MODE  = 3,
-    ALGVEHICLE_LINK_THPLATEID_SET_ENABLED_PLATE_FORMAT  = 4,
-    ALGVEHICLE_LINK_THPLATEID_SET_PROVINCE_ORDER  = 5,
-    ALGVEHICLE_LINK_THPLATEID_SET_RECOGTHRESHOLD  =6,
-    ALGVEHICLE_LINK_THPLATEID_SET_CONTRAST  = 7,
-    ALGVEHICLE_LINK_THPLATEID_SET_ENABLE_LEAN_CORRECTION = 8,
-    ALGVEHICLE_LINK_THPLATEID_SET_ENABLE_SHADOW = 9,    
-    ALGVEHICLE_LINK_THPLATEID_SET_AUTOSLOPERECTIFY_MODE = 10,
-    ALGVEHICLE_LINK_THPLATEID_CHECK_MIN_FREE_MEMORY = 11,
-    ALGVEHICLE_LINK_THPLATEID_TH_GET_VERSION = 12
-} AlgVehicleLink_ThPlateIdSetParamsMode;
 
 /**
     \brief ThPlateId link algorithm output 
@@ -114,7 +134,7 @@ typedef enum
     Defines variable that ThPlateId algorithm will update.
     Generated for every frame.
 */
-typedef struct AlgVehicleLink_ThPlateIdResult
+typedef struct 
 {
     //UInt32                      chId;
     /**< ThPlateId channel number */
@@ -153,6 +173,9 @@ typedef struct
     unsigned int dFormat;
     int pnMinFreeSRAM;
     int pnMinFreeSDRAM;
+
+	int nMaxPlateWidth;
+	int nMinPlateWidth;
 
     TH_RECT rcDetect;
     TH_RECT rcTrig;
@@ -283,16 +306,19 @@ static inline void AlgVehicleLink_CreateParams_Init(AlgVehicleLink_CreateParams 
     pPrm->thPlateIdCreateParams.chDefaultParams[0].bShadow = 1;    
     pPrm->thPlateIdCreateParams.chDefaultParams[0].pnMinFreeSDRAM = 0;
     pPrm->thPlateIdCreateParams.chDefaultParams[0].pnMinFreeSRAM = 0;
+
+	pPrm->thPlateIdCreateParams.chDefaultParams[0].nMaxPlateWidth = 500;
+	pPrm->thPlateIdCreateParams.chDefaultParams[0].nMinPlateWidth = 80;
    
-    pPrm->thPlateIdCreateParams.chDefaultParams[0].rcDetect.top = 200;
-    pPrm->thPlateIdCreateParams.chDefaultParams[0].rcDetect.bottom = 1080 - 200;
-    pPrm->thPlateIdCreateParams.chDefaultParams[0].rcDetect.left = 300;
-    pPrm->thPlateIdCreateParams.chDefaultParams[0].rcDetect.right = 1920 - 300;
+    pPrm->thPlateIdCreateParams.chDefaultParams[0].rcDetect.top = 50;
+    pPrm->thPlateIdCreateParams.chDefaultParams[0].rcDetect.bottom = 1080 - 50;
+    pPrm->thPlateIdCreateParams.chDefaultParams[0].rcDetect.left = 50;
+    pPrm->thPlateIdCreateParams.chDefaultParams[0].rcDetect.right = 1920 - 50;
 
     pPrm->thPlateIdCreateParams.chDefaultParams[0].rcTrig.top = 400;
     pPrm->thPlateIdCreateParams.chDefaultParams[0].rcTrig.bottom = 1080 - 400;
     pPrm->thPlateIdCreateParams.chDefaultParams[0].rcTrig.left = 200;
-    pPrm->thPlateIdCreateParams.chDefaultParams[0].rcTrig.right = 1920 - 200;	
+    pPrm->thPlateIdCreateParams.chDefaultParams[0].rcTrig.right = 1920 - 200;
 
     pPrm->thPlateIdCreateParams.numBufPerCh = 1 ;
     pPrm->thPlateIdCreateParams.numValidChForTHPLATEID = 1;

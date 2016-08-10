@@ -84,6 +84,7 @@ typedef struct
 	UInt32 vaId;
     UInt32 muxId;
 	UInt32 muxIdVnf;
+	UInt32 vehicleLprLinkId;
 
 } VSYS_MODULE_CONTEXT_S;
 

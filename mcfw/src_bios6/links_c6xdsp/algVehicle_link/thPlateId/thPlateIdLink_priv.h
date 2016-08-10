@@ -53,6 +53,9 @@ typedef struct
     void *pDspFrameBuf;
     /** Luma pointer to current frame */
 
+    int nMinPlateWidth;					// 检测的最小车牌宽度，以像素为单位
+    int nMaxPlateWidth;					// 检测的最大车牌宽度，以像素为单位		
+
     unsigned char cImageFormat;
     unsigned char bVertFlip;
     unsigned char bDwordAligned;
@@ -109,6 +112,10 @@ typedef struct AlgVehicleLink_ThPlateIdObj {
 
     AlgVehicleLink_ThPlateIdChObj   chObj[ALGVEHICLE_LINK_THPLATEID_MAX_CH];
 
+    //AlgVehicleLink_ThPlateIdDynParams thPlateIdDynParams;
+    UInt32 setConfigFlag;
+    UInt32 getConfigFlag;	
+
     void *algHndl;
     /**< handle to ThPlateId algorithm */
 
@@ -129,7 +136,7 @@ Int32 AlgVehicleLink_ThPlateIdAlgSetEnlargeMode (AlgVehicleLink_ThPlateIdObj *pT
 Int32 AlgVehicleLink_ThPlateIdAlgSetContrast (AlgVehicleLink_ThPlateIdObj *pThPlateIdAlgLinkObj);
 Int32 AlgVehicleLink_ThPlateIdAlgSetEnableLeanCorrection (AlgVehicleLink_ThPlateIdObj *pThPlateIdAlgLinkObj);
 Int32 AlgVehicleLink_ThPlateIdAlgSetEnableShadow (AlgVehicleLink_ThPlateIdObj *pThPlateIdAlgLinkObj);
-Int32 AlgVehicleLink_ThPlateIdAlgSetRecogRegion (AlgVehicleLink_ThPlateIdObj *pThPlateIdAlgLinkObj);
+Int32 AlgVehicleLink_ThPlateIdAlgSetRecogArea (AlgVehicleLink_ThPlateIdObj *pThPlateIdAlgLinkObj);
 Int32 AlgVehicleLink_ThPlateIdprintStatistics (AlgVehicleLink_ThPlateIdObj *pObj, Bool resetAfterPrint);
 
 

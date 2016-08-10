@@ -47,6 +47,8 @@ int ShareMemInit(int key); ///< Initial shared memory.
 void ShareMemRead(int offset,void *buf, int length); ///< Read shared memory.
 Int32 Vsys_setVaGuiPrm(VSYS_VA_GUISETPARAM vaGuiSetPrm,
                        VaLink_GuiParams *pVaPrm);
+Int32 Vsys_setLprDynPrm(VSYS_LPR_DYN_PARAM_MODE lprPrmMode, 
+						AlgVehicleLink_ThPlateIdDynParams *lprDynPrm);
 
 #ifdef __STREAM_DEBUG
 #define DBG(fmt, args...) fprintf(stderr, "Stream Debug: " fmt, ## args)
@@ -2318,13 +2320,31 @@ void *Msg_CTRL(void *args)
                     msgbuf.ret = 0;
                     break;
                 }
-				case MSG_CMD_GET_MCFW_INIT_STATUS:
-				{
-					McFWInitStatus *pStatus = (McFWInitStatus*)&msgbuf.mem_info;
-					pStatus->initDone = App_getInitStatus();
-					msgbuf.ret = 0;
-					break;
-				}
+                case MSG_CMD_GET_MCFW_INIT_STATUS:
+                {
+                    McFWInitStatus *pStatus = (McFWInitStatus*)&msgbuf.mem_info;
+                    pStatus->initDone = App_getInitStatus();
+                    msgbuf.ret = 0;
+                    break;
+                }
+                case MSG_CMD_SET_LPR_RECOGNITION_AREA:
+                {
+                    AlgPolygonArea recogAreaPrm;
+                    memcpy(&recogAreaPrm, &msgbuf.mem_info, sizeof(recogAreaPrm));
+					OSA_printf("stramRecogArea:%d,%d \n", recogAreaPrm.arr[1].x, recogAreaPrm.arr[2].y);
+                    stream_feature_setup(STREAM_FEATURE_SET_LPR_RECOGNITION_AREA, &recogAreaPrm);
+                    msgbuf.ret = 0;
+                    break;
+                }				
+                case MSG_CMD_SET_LPR_TRIGGER_AREA:
+                {
+                    AlgPolygonArea trggerAreaPrm;
+                    memcpy(&trggerAreaPrm, &msgbuf.mem_info, sizeof(trggerAreaPrm));
+					//OSA_printf("stramTrigArea:%d,%d \n", trggerAreaPrm.arr[1].x, trggerAreaPrm.arr[2].y);
+                    stream_feature_setup(STREAM_FEATURE_SET_LPR_TRIGGER_AREA, &trggerAreaPrm);
+                    msgbuf.ret = 0;
+                    break;
+                }
                 default:
                     DBG("default case \n");
                     break;
@@ -2439,6 +2459,7 @@ void stream_feature_setup(int nFeature, void *pParm)
 
     Vsys_fdPrm fdGuiPrm;
     VaLink_GuiParams vaGuiPrm;
+    AlgVehicleLink_ThPlateIdDynParams lprDynPrm;
     int i;
 
     if (nFeature < 0 || nFeature >= STREAM_FEATURE_NUM)
@@ -3183,7 +3204,7 @@ void stream_feature_setup(int nFeature, void *pParm)
 			break;
 		#endif
         }
-		case STREAM_FEATURE_AUX_DATETIMEPRM:
+        case STREAM_FEATURE_AUX_DATETIMEPRM:
         {
 			Vsys_swOsdPrm *pswosdGuiPrm_datetime;
 			TOSDPrm *pPrm_datetime = (TOSDPrm *) pParm;
@@ -3206,7 +3227,7 @@ void stream_feature_setup(int nFeature, void *pParm)
 			pswosdGuiPrm_datetime =NULL;
 			break;
         }
-		case STREAM_FEATURE_LPRINFOPRM:
+        case STREAM_FEATURE_LPRINFOPRM:
         {
 			Vsys_swOsdPrm *pswosdGuiPrm_datetime;
 			TOSDPrm *pPrm_datetime = (TOSDPrm *) pParm;
@@ -3630,9 +3651,9 @@ void stream_feature_setup(int nFeature, void *pParm)
                 chPrms.strmResolution[cnt].start_Y = 0;
                 chPrms.strmResolution[cnt].width = strmPrms->resolution[cnt].width;
                 chPrms.strmResolution[cnt].height = strmPrms->resolution[cnt].height;
-            printf("\n stream.c StreamId %d InSize %dx%d \n", cnt,
-                chPrms.strmResolution[cnt].width,
-                chPrms.strmResolution[cnt].height);
+                printf("\n stream.c StreamId %d InSize %dx%d \n", cnt,
+                													chPrms.strmResolution[cnt].width,
+                													chPrms.strmResolution[cnt].height);
             }
             /* Input Frame size is same as streams0 size */
             chPrms.inputWidth = strmPrms->resolution[0].width;
@@ -3713,6 +3734,70 @@ void stream_feature_setup(int nFeature, void *pParm)
 									  pVidCodecCfgPrm->codecCfg[i].encPreset);
 			}
 
+			break;
+		}
+		case STREAM_FEATURE_SET_LPR_RECOGNITION_AREA:
+		{
+			AlgPolygonArea * pLprRecogArea = (AlgPolygonArea *) pParm;
+			lprDynPrm.recogArea.arr[0].x = pLprRecogArea->arr[0].x;
+			lprDynPrm.recogArea.arr[0].y = pLprRecogArea->arr[0].y;
+			lprDynPrm.recogArea.arr[1].x = pLprRecogArea->arr[1].x;
+			lprDynPrm.recogArea.arr[1].y = pLprRecogArea->arr[1].y;
+			lprDynPrm.recogArea.arr[2].x = pLprRecogArea->arr[2].x;
+			lprDynPrm.recogArea.arr[2].y = pLprRecogArea->arr[2].y;
+			lprDynPrm.recogArea.arr[3].x = pLprRecogArea->arr[3].x;
+			lprDynPrm.recogArea.arr[3].y = pLprRecogArea->arr[3].y;			
+			
+			Vsys_setLprDynPrm(VSYS_SET_LPR_RECOGNITION_AREA, &lprDynPrm);	
+			
+			break;
+		}
+		case STREAM_FEATURE_SET_LPR_TRIGGER_AREA:
+		{
+			AlgPolygonArea * pLprTrigArea = (AlgPolygonArea *) pParm;
+			lprDynPrm.trigArea.arr[0].x = pLprTrigArea->arr[0].x;
+			lprDynPrm.trigArea.arr[0].y = pLprTrigArea->arr[0].y;
+			lprDynPrm.trigArea.arr[1].x = pLprTrigArea->arr[1].x;
+			lprDynPrm.trigArea.arr[1].y = pLprTrigArea->arr[1].y;
+			lprDynPrm.trigArea.arr[2].x = pLprTrigArea->arr[2].x;
+			lprDynPrm.trigArea.arr[2].y = pLprTrigArea->arr[2].y;
+			lprDynPrm.trigArea.arr[3].x = pLprTrigArea->arr[3].x;
+			lprDynPrm.trigArea.arr[3].y = pLprTrigArea->arr[3].y;
+			
+			Vsys_setLprDynPrm(VSYS_SET_LPR_TRIGGER_AREA, &lprDynPrm);
+			
+			break;
+		}
+		case STREAM_FEATURE_SET_LPR_TRIGGER_MODE:
+		{
+			break;
+		}
+		case STREAM_FEATURE_SET_LPR_TRIGGER_INTERVAL:
+		{
+			break;
+		}
+		case STREAM_FEATURE_SET_LPR_DEFAULT_PROVINCE:
+		{
+			break;
+		}
+		case STREAM_FEATURE_SET_LPR_PLATE_TYPE:
+		{
+			break;
+		}
+		case STREAM_FEATURE_SET_LPR_PLATE_MAX_WIDTH:
+		{
+			break;
+		}
+		case STREAM_FEATURE_SET_LPR_PLATE_MIN_WIDTH:
+		{
+			break;
+		}		
+		case STREAM_FEATURE_SET_LPR_MOVING_DIRECTION:
+		{
+			break;
+		}
+		case STREAM_FEATURE_SET_LPR_RECOGNITION_SCHEDULE:
+		{
 			break;
 		}
         default:

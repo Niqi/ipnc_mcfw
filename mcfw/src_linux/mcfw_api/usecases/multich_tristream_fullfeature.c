@@ -229,8 +229,8 @@ Void MultiCh_createTriStreamFullFtr()
 	ipcFramesOutDspId = SYSTEM_DSP_LINK_ID_IPC_FRAMES_OUT_0;
 	ipcFramesInVpssId = SYSTEM_VPSS_LINK_ID_IPC_FRAMES_IN_0;
 
-    vehicleId = SYSTEM_LINK_ID_ALGVEHICLE_0;	
-
+    vehicleId = SYSTEM_LINK_ID_ALGVEHICLE_0;
+	gVsysModuleContext.vehicleLprLinkId = SYSTEM_LINK_ID_ALGVEHICLE_0;
 
 #ifdef ENABLE_TILER_CAMERA
     /*

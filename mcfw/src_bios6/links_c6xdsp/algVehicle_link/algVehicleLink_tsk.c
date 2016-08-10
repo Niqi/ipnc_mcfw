@@ -319,7 +319,62 @@ Void AlgVehicleLink_tskMain(struct Utils_TskHndl *pTsk, Utils_MsgHndl * pMsg)
             case ALGVEHICLE_LINK_THPLATEID_CMD_PRINT_STATISTICS:
                 Utils_tskAckOrFreeMsg(pMsg, status);
                 Utils_tskSendCmd(&pObj->processTsk, ALGVEHICLE_LINK_THPLATEID_CMD_PRINT_STATISTICS);
-                break;                  
+                break; 
+
+            case ALGVEHICLE_LINK_THPLATEID_CMD_SET_RECOG_AREA:
+            {
+                UInt key;				
+                AlgLprPolygonArea *params;
+                params = (AlgLprPolygonArea *) Utils_msgGetPrm(pMsg);
+
+                key = Hwi_disable();
+                pObj->thPlateIdAlg.chParams[0].rcDetect.left = 
+					(params->arr[0].x < params->arr[3].x
+					 ? params->arr[0].x : params->arr[3].x);
+				
+                pObj->thPlateIdAlg.chParams[0].rcDetect.right =  
+					(params->arr[1].x > params->arr[2].x
+					 ? params->arr[1].x : params->arr[2].x);
+				
+                pObj->thPlateIdAlg.chParams[0].rcDetect.top =  
+					(params->arr[0].y < params->arr[1].y
+					 ? params->arr[0].y : params->arr[1].y);
+				
+                pObj->thPlateIdAlg.chParams[0].rcDetect.bottom =  
+					(params->arr[2].y > params->arr[3].y
+					 ? params->arr[2].y : params->arr[3].y);
+                Hwi_restore(key);
+                Utils_tskAckOrFreeMsg(pMsg, status);
+                Utils_tskSendCmd(&pObj->processTsk, ALGVEHICLE_LINK_THPLATEID_CMD_SET_RECOG_AREA);
+                break;		
+            }
+
+            case ALGVEHICLE_LINK_THPLATEID_CMD_SET_TRIGG_AREA:
+            {
+                UInt key;
+                AlgLprPolygonArea *params;
+                params = (AlgLprPolygonArea *) Utils_msgGetPrm(pMsg);
+                key = Hwi_disable();
+                pObj->thPlateIdAlg.chParams[0].rcTrig.left = 
+					(params->arr[0].x < params->arr[3].x
+					 ? params->arr[0].x : params->arr[3].x);
+				
+                pObj->thPlateIdAlg.chParams[0].rcTrig.right =  
+					(params->arr[1].x > params->arr[2].x
+					 ? params->arr[1].x : params->arr[2].x);
+				
+                pObj->thPlateIdAlg.chParams[0].rcTrig.top =  
+					(params->arr[0].y < params->arr[1].y
+					 ? params->arr[0].y : params->arr[1].y);
+				
+                pObj->thPlateIdAlg.chParams[0].rcTrig.bottom =  
+					(params->arr[2].y > params->arr[3].y
+					 ? params->arr[2].y : params->arr[3].y);
+                Hwi_restore(key);
+                Utils_tskAckOrFreeMsg(pMsg, status);
+                break;
+
+            }
 
             case SYSTEM_CMD_DELETE:
                 done = TRUE;
@@ -451,11 +506,11 @@ Void AlgVehicleLink_processTskMain(struct Utils_TskHndl *pTsk, Utils_MsgHndl * p
                 UTILS_assert(status == FVID2_SOK);
                 break;         
 
-            case ALGVEHICLE_LINK_THPLATEID_CMD_SET_RECOG_REGION:
+            case ALGVEHICLE_LINK_THPLATEID_CMD_SET_RECOG_AREA:
                 Utils_tskAckOrFreeMsg(pMsg, status);
-                status = AlgVehicleLink_ThPlateIdAlgSetRecogRegion(&pObj->thPlateIdAlg);
+                status = AlgVehicleLink_ThPlateIdAlgSetRecogArea(&pObj->thPlateIdAlg);
                 UTILS_assert(status == FVID2_SOK);
-                break;          
+                break;				
 
             case ALGVEHICLE_LINK_THPLATEID_CMD_PRINT_STATISTICS:
                 Utils_tskAckOrFreeMsg(pMsg, status);                

@@ -31,6 +31,9 @@ Int32 AlgVehicleLink_ThPlateIdalgCreate(AlgVehicleLink_ThPlateIdObj * pObj)
     Vps_printf(" %d: THPLATEIDLINK    : Create in progress !!!\n",
                         Utils_getCurTimeInMsec());
 #endif
+	pObj->setConfigFlag = 0;
+	pObj->getConfigFlag = 0;
+
     pObj->chObj[0].inFrameProcessCount = 0;
     pObj->chObj[0].totalFrameCount = 0;
     pObj->chObj[0].maxProcessTime = 0;
@@ -108,6 +111,9 @@ Int32 AlgVehicleLink_ThPlateIdalgCreate(AlgVehicleLink_ThPlateIdObj * pObj)
         chl->pnMinFreeSRAM = chPrm->pnMinFreeSRAM;
         chl->pnMinFreeSDRAM = chPrm->pnMinFreeSDRAM; 
 
+		chl->nMaxPlateWidth = chPrm->nMaxPlateWidth;
+		chl->nMinPlateWidth = chPrm->nMinPlateWidth;		
+
         //memcpy(&chl->algConfig, &chPrm->algConfig, sizeof(TH_PlateIDCfg));
 
         chl->rcDetect.top =         chPrm->rcDetect.top;
@@ -163,7 +169,7 @@ Int32 AlgVehicleLink_ThPlateIdalgCreate(AlgVehicleLink_ThPlateIdObj * pObj)
         AlgVehicleLink_ThPlateIdAlgSetProvinceOrder(pObj);
         AlgVehicleLink_ThPlateIdAlgSetEnableLeanCorrection(pObj);
         AlgVehicleLink_ThPlateIdAlgSetEnableShadow(pObj);
-        AlgVehicleLink_ThPlateIdAlgSetRecogRegion(pObj);
+        AlgVehicleLink_ThPlateIdAlgSetRecogArea(pObj);
 
         pThPlateIdChPrm->width  = pObj->inQueInfo->chInfo[pThPlateIdChPrm->chId].width +
             pObj->inQueInfo->chInfo[pThPlateIdChPrm->chId].startX;
@@ -308,6 +314,9 @@ static Int32 AlgVehicleLink_ThPlateIdalgSetChPrm(AlgVehicleLink_ThPlateIdchPrm  
     pThPlateIdChPrm->dFormat = params->dFormat;
     pThPlateIdChPrm->pnMinFreeSRAM = params->pnMinFreeSRAM;
     pThPlateIdChPrm->pnMinFreeSDRAM = params->pnMinFreeSDRAM; 
+
+	pThPlateIdChPrm->nMaxPlateWidth = params->nMaxPlateWidth;
+	pThPlateIdChPrm->nMinPlateWidth = params->nMinPlateWidth;	
     
     //memcpy(&pThPlateIdChPrm->algConfig, &params->algConfig, sizeof(TH_PlateIDCfg));
 
@@ -320,6 +329,8 @@ static Int32 AlgVehicleLink_ThPlateIdalgSetChPrm(AlgVehicleLink_ThPlateIdchPrm  
     pThPlateIdChPrm->rcTrig.bottom =    params->rcTrig.bottom;
     pThPlateIdChPrm->rcTrig.left =         params->rcTrig.left;
     pThPlateIdChPrm->rcTrig.right =       params->rcTrig.right;	
+
+	//pThPlateIdChPrm->nMaxPlateWidth = params->n;
 
     Vps_printf( "THPLATEIDLINK    :SetChPrm\n");
  
@@ -335,13 +346,13 @@ Int32 AlgVehicleLink_ThPlateIdInit(AlgVehicleLink_ThPlateIdObj *pThPlateIdAlgLin
 
     chanID = pThPlateIdAlgLinkObj->chParams[0].chId;
 
-    chanParam.setMode = THPLATEID_SET_INIT;
+    //chanParam.setMode = THPLATEID_SET_INIT;
 
     /* Activate the Algorithm */
     DSKT2_activateAlg(gThPlateIdScratchId, (IALG_Handle)pThPlateIdAlgLinkObj->algHndl);    
     
-    chanStatus = THPLATEIDALG_TI_setPrms(pThPlateIdAlgLinkObj->algHndl, 
-                                                                    chanID, &chanParam); 
+    chanStatus = THPLATEIDALG_TI_setPrms(pThPlateIdAlgLinkObj->algHndl, chanID,
+											THPLATEID_SET_INIT, &chanParam); 
 
     /* Deactivate algorithm */
     DSKT2_deactivateAlg(gThPlateIdScratchId, (IALG_Handle)pThPlateIdAlgLinkObj->algHndl);
@@ -370,13 +381,13 @@ Int32 AlgVehicleLink_ThPlateIdDeInit (AlgVehicleLink_ThPlateIdObj *pThPlateIdAlg
 
     chanID = pThPlateIdAlgLinkObj->chParams[0].chId;
 
-    chanParam.setMode = THPLATEID_SET_DEINIT;
+    //chanParam.setMode = THPLATEID_SET_DEINIT;
 
     /* Activate the Algorithm */
     DSKT2_activateAlg(gThPlateIdScratchId, (IALG_Handle)pThPlateIdAlgLinkObj->algHndl);    
     
-    chanStatus = THPLATEIDALG_TI_setPrms(pThPlateIdAlgLinkObj->algHndl, 
-                                                                    chanID, &chanParam); 
+    chanStatus = THPLATEIDALG_TI_setPrms(pThPlateIdAlgLinkObj->algHndl, chanID, 
+											THPLATEID_SET_DEINIT, &chanParam); 
 
     /* Deactivate algorithm */
     DSKT2_deactivateAlg(gThPlateIdScratchId, (IALG_Handle)pThPlateIdAlgLinkObj->algHndl);
@@ -407,7 +418,7 @@ Int32 AlgVehicleLink_ThPlateIdAlgSetImageFormat (AlgVehicleLink_ThPlateIdObj *pT
     chPrm = &(pThPlateIdAlgLinkObj->chParams[0]); 
     chanID = chPrm->chId;
 
-    chanParam.setMode = THPLATEID_SET_IMAGE_FORMAT;   
+    //chanParam.setMode = THPLATEID_SET_IMAGE_FORMAT;   
     chanParam.cImageFormat          = chPrm->cImageFormat;
     chanParam.bVertFlip                 = chPrm->bVertFlip;
     chanParam.bDwordAligned         = chPrm->bDwordAligned;    
@@ -415,8 +426,8 @@ Int32 AlgVehicleLink_ThPlateIdAlgSetImageFormat (AlgVehicleLink_ThPlateIdObj *pT
     /* Activate the Algorithm */
     DSKT2_activateAlg(gThPlateIdScratchId, (IALG_Handle)pThPlateIdAlgLinkObj->algHndl);    
     
-    chanStatus = THPLATEIDALG_TI_setPrms(pThPlateIdAlgLinkObj->algHndl, 
-                                                                    chanID, &chanParam); 
+    chanStatus = THPLATEIDALG_TI_setPrms(pThPlateIdAlgLinkObj->algHndl, chanID,
+											THPLATEID_SET_IMAGE_FORMAT, &chanParam); 
 
     /* Deactivate algorithm */
     DSKT2_deactivateAlg(gThPlateIdScratchId, (IALG_Handle)pThPlateIdAlgLinkObj->algHndl);
@@ -447,14 +458,14 @@ Int32 AlgVehicleLink_ThPlateIdAlgSetEnbalePlateFormat (AlgVehicleLink_ThPlateIdO
     chPrm = &(pThPlateIdAlgLinkObj->chParams[0]); 
     chanID = chPrm->chId;
 
-    chanParam.setMode = THPLATEID_SET_ENABLED_PLATE_FORMAT;   
+    //chanParam.setMode = THPLATEID_SET_ENABLED_PLATE_FORMAT;   
     chanParam.dFormat          = chPrm->dFormat;
 
     /* Activate the Algorithm */
     DSKT2_activateAlg(gThPlateIdScratchId, (IALG_Handle)pThPlateIdAlgLinkObj->algHndl);    
     
-    chanStatus = THPLATEIDALG_TI_setPrms(pThPlateIdAlgLinkObj->algHndl, 
-                                                                    chanID, &chanParam); 
+    chanStatus = THPLATEIDALG_TI_setPrms(pThPlateIdAlgLinkObj->algHndl, chanID,
+											THPLATEID_SET_ENABLED_PLATE_FORMAT, &chanParam); 
 
     /* Deactivate algorithm */
     DSKT2_deactivateAlg(gThPlateIdScratchId, (IALG_Handle)pThPlateIdAlgLinkObj->algHndl);
@@ -485,15 +496,15 @@ Int32 AlgVehicleLink_ThPlateIdAlgSetRecogThreshold (AlgVehicleLink_ThPlateIdObj 
     chPrm = &(pThPlateIdAlgLinkObj->chParams[0]); 
     chanID = chPrm->chId;
 
-    chanParam.setMode = THPLATEID_SET_RECOGTHRESHOLD;   
+    //chanParam.setMode = THPLATEID_SET_RECOGTHRESHOLD;   
     chanParam.nPlateLocate_Th          = chPrm->nPlateLocate_Th;
     chanParam.nOCR_Th                   = chPrm->nOCR_Th;    
 
     /* Activate the Algorithm */
     DSKT2_activateAlg(gThPlateIdScratchId, (IALG_Handle)pThPlateIdAlgLinkObj->algHndl);    
     
-    chanStatus = THPLATEIDALG_TI_setPrms(pThPlateIdAlgLinkObj->algHndl, 
-                                                                    chanID, &chanParam); 
+    chanStatus = THPLATEIDALG_TI_setPrms(pThPlateIdAlgLinkObj->algHndl, chanID,
+											THPLATEID_SET_RECOGTHRESHOLD, &chanParam); 
 
     /* Deactivate algorithm */
     DSKT2_deactivateAlg(gThPlateIdScratchId, (IALG_Handle)pThPlateIdAlgLinkObj->algHndl);
@@ -524,14 +535,14 @@ Int32 AlgVehicleLink_ThPlateIdAlgSetProvinceOrder (AlgVehicleLink_ThPlateIdObj *
     chPrm = &(pThPlateIdAlgLinkObj->chParams[0]); 
     chanID = chPrm->chId;
 
-    chanParam.setMode = THPLATEID_SET_PROVINCE_ORDER;   
+    //chanParam.setMode = THPLATEID_SET_PROVINCE_ORDER;   
     strcpy(&chanParam.szProvince[0], &chPrm->szProvince[0]);
 
     /* Activate the Algorithm */
     DSKT2_activateAlg(gThPlateIdScratchId, (IALG_Handle)pThPlateIdAlgLinkObj->algHndl);    
     
-    chanStatus = THPLATEIDALG_TI_setPrms(pThPlateIdAlgLinkObj->algHndl, 
-                                                                    chanID, &chanParam); 
+    chanStatus = THPLATEIDALG_TI_setPrms(pThPlateIdAlgLinkObj->algHndl, chanID, 
+											THPLATEID_SET_PROVINCE_ORDER, &chanParam); 
 
     /* Deactivate algorithm */
     DSKT2_deactivateAlg(gThPlateIdScratchId, (IALG_Handle)pThPlateIdAlgLinkObj->algHndl);
@@ -562,14 +573,14 @@ Int32 AlgVehicleLink_ThPlateIdAlgSetEnlargeMode (AlgVehicleLink_ThPlateIdObj *pT
     chPrm = &(pThPlateIdAlgLinkObj->chParams[0]); 
     chanID = chPrm->chId;
 
-    chanParam.setMode = THPLATEID_SET_ENLARGE_MODE;   
+    //chanParam.setMode = THPLATEID_SET_ENLARGE_MODE;   
     chanParam.bEnlarge          = chPrm->bEnlarge;
 
     /* Activate the Algorithm */
     DSKT2_activateAlg(gThPlateIdScratchId, (IALG_Handle)pThPlateIdAlgLinkObj->algHndl);    
     
-    chanStatus = THPLATEIDALG_TI_setPrms(pThPlateIdAlgLinkObj->algHndl, 
-                                                                    chanID, &chanParam); 
+    chanStatus = THPLATEIDALG_TI_setPrms(pThPlateIdAlgLinkObj->algHndl, chanID, 
+											THPLATEID_SET_ENLARGE_MODE, &chanParam); 
 
     /* Deactivate algorithm */
     DSKT2_deactivateAlg(gThPlateIdScratchId, (IALG_Handle)pThPlateIdAlgLinkObj->algHndl);
@@ -599,14 +610,14 @@ Int32 AlgVehicleLink_ThPlateIdAlgSetContrast (AlgVehicleLink_ThPlateIdObj *pThPl
     chPrm = &(pThPlateIdAlgLinkObj->chParams[0]); 
     chanID = chPrm->chId;
 
-    chanParam.setMode = THPLATEID_SET_CONTRAST;   
+    //chanParam.setMode = THPLATEID_SET_CONTRAST;   
     chanParam.nContrast          = chPrm->nContrast;
 
     /* Activate the Algorithm */
     DSKT2_activateAlg(gThPlateIdScratchId, (IALG_Handle)pThPlateIdAlgLinkObj->algHndl);    
     
-    chanStatus = THPLATEIDALG_TI_setPrms(pThPlateIdAlgLinkObj->algHndl, 
-                                                                    chanID, &chanParam); 
+    chanStatus = THPLATEIDALG_TI_setPrms(pThPlateIdAlgLinkObj->algHndl, chanID, 
+											THPLATEID_SET_CONTRAST, &chanParam); 
 
     /* Deactivate algorithm */
     DSKT2_deactivateAlg(gThPlateIdScratchId, (IALG_Handle)pThPlateIdAlgLinkObj->algHndl);
@@ -637,14 +648,14 @@ Int32 AlgVehicleLink_ThPlateIdAlgSetEnableLeanCorrection (AlgVehicleLink_ThPlate
     chPrm = &(pThPlateIdAlgLinkObj->chParams[0]); 
     chanID = chPrm->chId;
 
-    chanParam.setMode = THPLATEID_SET_ENABLE_LEAN_CORRECTION;   
+    //chanParam.setMode = THPLATEID_SET_ENABLE_LEAN_CORRECTION;   
     chanParam.bLeanCorrection          = chPrm->bLeanCorrection;
 
     /* Activate the Algorithm */
     DSKT2_activateAlg(gThPlateIdScratchId, (IALG_Handle)pThPlateIdAlgLinkObj->algHndl);    
     
-    chanStatus = THPLATEIDALG_TI_setPrms(pThPlateIdAlgLinkObj->algHndl, 
-                                                                    chanID, &chanParam); 
+    chanStatus = THPLATEIDALG_TI_setPrms(pThPlateIdAlgLinkObj->algHndl, chanID, 
+											THPLATEID_SET_ENABLE_LEAN_CORRECTION, &chanParam); 
 
     /* Deactivate algorithm */
     DSKT2_deactivateAlg(gThPlateIdScratchId, (IALG_Handle)pThPlateIdAlgLinkObj->algHndl);
@@ -675,14 +686,14 @@ Int32 AlgVehicleLink_ThPlateIdAlgSetEnableShadow (AlgVehicleLink_ThPlateIdObj *p
     chPrm = &(pThPlateIdAlgLinkObj->chParams[0]); 
     chanID = chPrm->chId;
 
-    chanParam.setMode = THPLATEID_SET_ENABLE_SHADOW;   
+    //chanParam.setMode = THPLATEID_SET_ENABLE_SHADOW;   
     chanParam.bShadow          = chPrm->bShadow;
 
     /* Activate the Algorithm */
     DSKT2_activateAlg(gThPlateIdScratchId, (IALG_Handle)pThPlateIdAlgLinkObj->algHndl);    
     
-    chanStatus = THPLATEIDALG_TI_setPrms(pThPlateIdAlgLinkObj->algHndl, 
-                                                                    chanID, &chanParam); 
+    chanStatus = THPLATEIDALG_TI_setPrms(pThPlateIdAlgLinkObj->algHndl, chanID, 
+											THPLATEID_SET_ENABLE_SHADOW, &chanParam); 
 
     /* Deactivate algorithm */
     DSKT2_deactivateAlg(gThPlateIdScratchId, (IALG_Handle)pThPlateIdAlgLinkObj->algHndl);
@@ -703,7 +714,7 @@ Int32 AlgVehicleLink_ThPlateIdAlgSetEnableShadow (AlgVehicleLink_ThPlateIdObj *p
 }
 
 
-Int32 AlgVehicleLink_ThPlateIdAlgSetRecogRegion (AlgVehicleLink_ThPlateIdObj *pThPlateIdAlgLinkObj)
+Int32 AlgVehicleLink_ThPlateIdAlgSetRecogArea (AlgVehicleLink_ThPlateIdObj *pThPlateIdAlgLinkObj)
 {
     UInt32 chanID;
     THPLATEIDALG_chPrm       chanParam;
@@ -713,7 +724,7 @@ Int32 AlgVehicleLink_ThPlateIdAlgSetRecogRegion (AlgVehicleLink_ThPlateIdObj *pT
     chPrm = &(pThPlateIdAlgLinkObj->chParams[0]); 
     chanID = chPrm->chId;
 
-    chanParam.setMode = THPLATEID_SET_RECOGREGION;   
+    //chanParam.setMode = THPLATEID_SET_RECOGREGION;   
     chanParam.rcDetect.bottom = chPrm->rcDetect.bottom;
     chanParam.rcDetect.top      = chPrm->rcDetect.top;
     chanParam.rcDetect.left      = chPrm->rcDetect.left;
@@ -722,8 +733,8 @@ Int32 AlgVehicleLink_ThPlateIdAlgSetRecogRegion (AlgVehicleLink_ThPlateIdObj *pT
     /* Activate the Algorithm */
     DSKT2_activateAlg(gThPlateIdScratchId, (IALG_Handle)pThPlateIdAlgLinkObj->algHndl);    
     
-    chanStatus = THPLATEIDALG_TI_setPrms(pThPlateIdAlgLinkObj->algHndl, 
-                                                                    chanID, &chanParam); 
+    chanStatus = THPLATEIDALG_TI_setPrms(pThPlateIdAlgLinkObj->algHndl, chanID, 
+											THPLATEID_SET_RECOGREGION, &chanParam); 
 
     /* Deactivate algorithm */
     DSKT2_deactivateAlg(gThPlateIdScratchId, (IALG_Handle)pThPlateIdAlgLinkObj->algHndl);
@@ -742,7 +753,6 @@ Int32 AlgVehicleLink_ThPlateIdAlgSetRecogRegion (AlgVehicleLink_ThPlateIdObj *pT
    
     return FVID2_SOK;
 }
-
 
 
 Int32 AlgVehicleLink_ThPlateIdprintStatistics (AlgVehicleLink_ThPlateIdObj *pObj, Bool resetAfterPrint)

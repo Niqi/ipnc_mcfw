@@ -730,7 +730,7 @@ Int32 SwosdLink_processFrames(SwosdLink_Obj * pObj)
 			swosdApplyAddrUV = fullFrameAddrUV = (Ptr)((UInt32)pFullFrame->addr[0][1] + 
 			                                           (pChInfo->startX + (pChInfo->startY/2 * pChInfo->pitch[1])));
 						
-			if(pChInfo->memType == SYSTEM_MT_TILEDMEM)
+			if(0)//(pChInfo->memType == SYSTEM_MT_TILEDMEM)
 			{
 				fullFrameAddrY  = (Ptr)Utils_tilerAddr2CpuAddr((UInt32)fullFrameAddrY);
 				fullFrameAddrUV = (Ptr)Utils_tilerAddr2CpuAddr((UInt32)fullFrameAddrUV);
@@ -758,12 +758,15 @@ Int32 SwosdLink_processFrames(SwosdLink_Obj * pObj)
 
             UTILS_assert(status == FVID2_SOK);
 
-			DM81XX_SWOSD_apply(pFullFrame->channelNum,     	// stream Id
-							   (Int32)swosdApplyAddrY,	  	// Y plane address
-							   (Int32)swosdApplyAddrUV); 	// UV plane address
+			if(0)
+			{
+				DM81XX_SWOSD_apply(pFullFrame->channelNum,     	// stream Id
+								   (Int32)swosdApplyAddrY,	  	// Y plane address
+								   (Int32)swosdApplyAddrUV); 	// UV plane address
+			}
 			
 			/* Draw the histogram */						
-			if(pFullFrame->channelNum == 0)
+			if(0)//(pFullFrame->channelNum == 0)
 			{
                 CameraLink_getHistData(&histData);
 							

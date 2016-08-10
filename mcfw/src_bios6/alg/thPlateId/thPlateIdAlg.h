@@ -111,7 +111,7 @@ typedef struct
     unsigned int chId;
     /**< Unique video channel identifier, e.g. channel no. */
 
-    ThPlateIdSetParamsMode setMode;
+    //ThPlateIdSetParamsMode setMode;
 
     unsigned int width;
     /**< Set the width (in pixels) of video frame that THPLATEIDALG will process */
@@ -124,6 +124,9 @@ typedef struct
 
     void *curFrame;
     /**< Luma pointer to current frame */ 
+
+    int nMinPlateWidth;					// 检测的最小车牌宽度，以像素为单位
+    int nMaxPlateWidth;					// 检测的最大车牌宽度，以像素为单位	
 
     unsigned char cImageFormat;
     unsigned char bVertFlip;
@@ -142,6 +145,7 @@ typedef struct
     int pnMinFreeSDRAM;         
 
     TH_RECT rcDetect;
+	
 
 } THPLATEIDALG_chPrm;
 
@@ -179,7 +183,7 @@ typedef struct
 
 THPLATEIDALG_Status 
 THPLATEIDALG_TI_setPrms(void         *handle,
-                        unsigned int        chanID,
+                        unsigned int        chanID, ThPlateIdSetParamsMode setMode,
 			   THPLATEIDALG_chPrm *pThPlateIdChPrm);
 
 THPLATEIDALG_Status

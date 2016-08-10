@@ -78,7 +78,7 @@ Int32 AlgVehicleLink_algDelete(AlgVehicleLink_Obj * pObj)
 	return FVID2_SOK;
 }
 
-static Int32 Valink_OSDInitial(void)
+static Int32 AlgVehicleLink_OSDInitial(void)
 {
     Ptr buf = NULL;
     Ptr srHeap = NULL;
@@ -96,7 +96,7 @@ static Int32 Valink_OSDInitial(void)
 	return FVID2_SOK;
 }
 
-static Int32 Valink_CreatOSDFrame(UInt32 timeStamp,const TH_PlateIDResult *result)
+static Int32 AlgVehicleLink_CreatOSDFrame(UInt32 timeStamp,const TH_PlateIDResult *result)
 {
 	static Int32 bCreatPtr = FALSE;
 #if 0
@@ -104,7 +104,7 @@ static Int32 Valink_CreatOSDFrame(UInt32 timeStamp,const TH_PlateIDResult *resul
 #endif
 	if(bCreatPtr == FALSE){
 		bCreatPtr = TRUE;
-		Valink_OSDInitial();
+		AlgVehicleLink_OSDInitial();
 	}
 	gTDSPLprResualt->timeStamp = timeStamp;
 	strcpy(gTDSPLprResualt->lprResult.license, result->license);
@@ -154,6 +154,11 @@ Int32 AlgVehicleLink_algProcessData(AlgVehicleLink_Obj * pObj)
             /* THPLATEID ALG */
             if (pObj->createArgs.enableThPlateIdAlg)
             {
+				if(pAlgObj->setConfigFlag)
+				{
+					//set dynamic parameters;
+				}
+			
 	            /* statist process time start */
 	            start = Utils_getCurTimeInUsec();  
 
@@ -166,7 +171,7 @@ Int32 AlgVehicleLink_algProcessData(AlgVehicleLink_Obj * pObj)
 				{
 					if(thPlateResult->nConfidence > 50)
 					{
-						//Vps_printf("\n THPLATEIDALG: %ld \n", end - start);
+						//Vps_printf("\n THPLATEIDALG: %s, tm:%ld \n", thPlateResult->license, end - start);
 						thPlateRectCenterX = (thPlateResult->rcLocation.left + thPlateResult->rcLocation.right)>>1;
 						thPlateRectCenterY = (thPlateResult->rcLocation.top+ thPlateResult->rcLocation.bottom)>>1;
 						
@@ -179,7 +184,7 @@ Int32 AlgVehicleLink_algProcessData(AlgVehicleLink_Obj * pObj)
 							if(1 == pAlgObj->chObj[0].inFrameProcessCount)
 							{
 								pAlgObj->chObj[0].totalFrameCount = 0; 
-								Valink_CreatOSDFrame(pFullFrame->timeStamp, thPlateResult); 
+								AlgVehicleLink_CreatOSDFrame(pFullFrame->timeStamp, thPlateResult); 
 
 								pInFrameInfo = (System_FrameInfo *) pFullFrame->appData;
 								if(NULL != pInFrameInfo)
@@ -210,7 +215,7 @@ Int32 AlgVehicleLink_algProcessData(AlgVehicleLink_Obj * pObj)
             pAlgObj->chObj[0].totalProcessTime += (end - start);
             pAlgObj->chObj[0].processFrCnt ++;
 
-			if(pAlgObj->chObj[0].totalFrameCount > 90)//90帧以内其它结果扔掉
+			if(pAlgObj->chObj[0].totalFrameCount > 200)//200帧以内其它结果扔掉
 			{
 				pAlgObj->chObj[0].inFrameProcessCount = 0;
 			}

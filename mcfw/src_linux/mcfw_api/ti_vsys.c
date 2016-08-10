@@ -1672,3 +1672,78 @@ Int32 Vsys_setSwOsdBmp(VSYS_SWOSD_SETBMP swOsdSetPrm,Vsys_swOsdPrm **ppSwOsdPrm)
 	return OSA_SOK;
 }
 
+Int32 Vsys_setLprDynPrm(VSYS_LPR_DYN_PARAM_MODE lprPrmMode, 
+						AlgVehicleLink_ThPlateIdDynParams *lprDynPrm)
+{
+	//AlgVehicleLink_ThPlateIdDynParams lpr
+	switch(lprPrmMode)
+	{
+		case VSYS_SET_LPR_RECOGNITION_AREA:
+		{
+			if (gVsysModuleContext.vehicleLprLinkId != SYSTEM_LINK_ID_INVALID)
+			{
+				System_linkControl(gVsysModuleContext.vehicleLprLinkId, 					// dest link id
+								   ALGVEHICLE_LINK_THPLATEID_CMD_SET_RECOG_AREA,			// cmd
+								   &lprDynPrm->recogArea,                  					// prm
+								   sizeof(AlgLprPolygonArea), 								// prm size
+								   TRUE);                      								// wait for ack
+			}			
+			break;
+		}
+		case VSYS_SET_LPR_TRIGGER_AREA:
+		{
+			if (gVsysModuleContext.vehicleLprLinkId != SYSTEM_LINK_ID_INVALID)
+			{
+				System_linkControl(gVsysModuleContext.vehicleLprLinkId, 					// dest link id
+								   ALGVEHICLE_LINK_THPLATEID_CMD_SET_TRIGG_AREA, 			// cmd
+								   &lprDynPrm->trigArea,                  					// prm
+								   sizeof(AlgLprPolygonArea), 								// prm size
+								   TRUE);                      								// wait for ack
+			}			
+			break;			
+			break;
+		}			
+		case VSYS_SET_LPR_TRIGGER_MODE:
+		{
+			break;
+		}			
+    	case VSYS_SET_LPR_TRIGGER_INTERVAL:
+		{
+			break;
+		}		
+		case VSYS_SET_LPR_DEFAULT_PROVINCE:
+		{
+			break;
+		}		
+		case VSYS_SET_LPR_PLATE_TYPE:
+		{
+			break;
+		}		
+		case VSYS_SET_LPR_PLATE_MAX_WIDTH:
+		{
+			break;
+		}		
+		case VSYS_SET_LPR_PLATE_MIN_WIDTH:
+		{
+			break;
+		}		
+    	case VSYS_SET_LPR_MOVING_DIRECTION:
+		{
+			break;
+		}		
+    	case VSYS_SET_LPR_RECOGNITION_SCHEDULE:
+		{
+			break;
+		}		
+    	case VSYS_GET_LPR_VERSION:
+		{
+			break;
+		}		
+
+		default:
+			break;
+	}
+	
+	return OSA_SOK;
+}
+

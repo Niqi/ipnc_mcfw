@@ -189,6 +189,9 @@ Int THPLATEIDALG_TI_initObj(IALG_Handle handle, const IALG_MemRec memTab[],
 
     thPlateIdAlgChParams->curFrame= (unsigned char *)memTab[4].base;
 
+	thPlateIdAlgChParams->nMaxPlateWidth = params->chDefaultParams[0].nMaxPlateWidth;
+	thPlateIdAlgChParams->nMinPlateWidth = params->chDefaultParams[0].nMinPlateWidth;	
+
     pAlgConfig = (TH_PlateIDCfg *)memTab[5].base;
 
     if(NULL != pAlgConfig)
@@ -293,6 +296,8 @@ THPLATEIDALG_TI_process(void        *handle,
     rcDetect.top = thPlateIdAlgChParams->rcDetect.top;
     rcDetect.left = thPlateIdAlgChParams->rcDetect.left;
     rcDetect.right = thPlateIdAlgChParams->rcDetect.right; 
+	//pAlgConfig->nMaxPlateWidth = thPlateIdAlgChParams->nMaxPlateWidth;
+	//pAlgConfig->nMinPlateWidth = thPlateIdAlgChParams->nMinPlateWidth;
     nNumberOfVehicle = 1;
 
 	//reserved for down sampling resizer
@@ -379,7 +384,7 @@ THPLATEIDALG_TI_process(void        *handle,
 */
 THPLATEIDALG_Status 
 THPLATEIDALG_TI_setPrms(void         	*handle,        
-       unsigned int        chanID,        
+       unsigned int        chanID, ThPlateIdSetParamsMode setMode,
        THPLATEIDALG_chPrm   *pThPlateIdChPrm)
 {
     THPLATEIDALG_Status	status = THPLATEID_NO_ERROR;
@@ -397,7 +402,7 @@ THPLATEIDALG_TI_setPrms(void         	*handle,
     thPlateIdAlgChParams = (THPLATEIDALG_chPrm *)obj->thPlateIdAlgStaticCfg;
     /* All run time dynamic params settings here */
 
-    switch(pThPlateIdChPrm->setMode)
+    switch(setMode)
     { 
         case THPLATEID_SET_INIT:    
         thPlateIdRetVal = TH_InitPlateIDSDK(pAlgConfig);
@@ -464,7 +469,10 @@ THPLATEIDALG_TI_setPrms(void         	*handle,
             thPlateIdAlgChParams->rcDetect.top = pThPlateIdChPrm->rcDetect.top;
             thPlateIdAlgChParams->rcDetect.left= pThPlateIdChPrm->rcDetect.left;
             thPlateIdAlgChParams->rcDetect.right= pThPlateIdChPrm->rcDetect.right;
-            Vps_printf("THPLATEIDALG:RECOGREGION,%d \n", pThPlateIdChPrm->rcDetect.bottom);            
+            Vps_printf("THPLATEIDALG:RECOGREGION,%d:%d:%d:%d \n", pThPlateIdChPrm->rcDetect.left,
+															pThPlateIdChPrm->rcDetect.right,
+															pThPlateIdChPrm->rcDetect.top,
+															pThPlateIdChPrm->rcDetect.bottom);            
             break;              
         
         case THPLATEID_SET_AUTOSLOPERECTIFY_MODE:

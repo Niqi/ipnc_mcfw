@@ -507,6 +507,23 @@ typedef struct VSYS_MUX_IN_Q_CHAN_MAP_INFO_S {
 
 } VSYS_MUX_IN_Q_CHAN_MAP_INFO_S;
 
+
+typedef enum
+{
+    VSYS_SET_LPR_RECOGNITION_AREA = 0,
+    VSYS_SET_LPR_TRIGGER_AREA = 1,    
+    VSYS_SET_LPR_TRIGGER_MODE  = 2,
+    VSYS_SET_LPR_TRIGGER_INTERVAL  = 3,
+    VSYS_SET_LPR_DEFAULT_PROVINCE  = 4,
+    VSYS_SET_LPR_PLATE_TYPE  = 5,
+    VSYS_SET_LPR_PLATE_MAX_WIDTH  = 6,
+    VSYS_SET_LPR_PLATE_MIN_WIDTH  = 7,
+    VSYS_SET_LPR_MOVING_DIRECTION = 8,
+    VSYS_SET_LPR_RECOGNITION_SCHEDULE = 9,
+    VSYS_GET_LPR_VERSION = 10,
+} VSYS_LPR_DYN_PARAM_MODE;
+
+
 /* =============================================================================
  * APIs
  * =============================================================================
