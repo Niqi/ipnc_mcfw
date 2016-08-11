@@ -85,8 +85,9 @@ typedef enum
     THPLATEID_SET_ENABLE_SHADOW = 9,
     THPLATEID_SET_RECOGREGION = 10,
     THPLATEID_SET_AUTOSLOPERECTIFY_MODE = 11,
-    THPLATEID_CHECK_MIN_FREE_MEMORY = 12,
-    THPLATEID_TH_GET_VERSION = 13
+    THPLATEID_SET_PLATE_WIDTH = 12,    
+    THPLATEID_CHECK_MIN_FREE_MEMORY = 13,
+    THPLATEID_TH_GET_VERSION = 14
 } ThPlateIdSetParamsMode;
 
 
@@ -142,11 +143,10 @@ typedef struct
     char szProvince[16];
     unsigned int dFormat;
     int pnMinFreeSRAM;
-    int pnMinFreeSDRAM;         
+    int pnMinFreeSDRAM;        
 
     TH_RECT rcDetect;
 	
-
 } THPLATEIDALG_chPrm;
 
 /**

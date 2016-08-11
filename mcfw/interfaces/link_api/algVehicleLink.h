@@ -53,8 +53,9 @@ extern "C" {
 #define ALGVEHICLE_LINK_THPLATEID_CMD_SET_ENABLE_LEAN_CORRECTION				(0x8009)
 #define ALGVEHICLE_LINK_THPLATEID_CMD_SET_ENABLED_SHADOW						(0x800a)
 #define ALGVEHICLE_LINK_THPLATEID_CMD_SET_RECOG_AREA							(0x800b)
-#define ALGVEHICLE_LINK_THPLATEID_CMD_SET_TRIGG_AREA							(0x800c)
-#define ALGVEHICLE_LINK_THPLATEID_CMD_PRINT_STATISTICS							(0x800d)
+#define ALGVEHICLE_LINK_THPLATEID_CMD_SET_TRIGG_INFO							(0x800c)
+#define ALGVEHICLE_LINK_THPLATEID_CMD_SET_PLATE_WIDTH							(0x800d)
+#define ALGVEHICLE_LINK_THPLATEID_CMD_PRINT_STATISTICS							(0x800e)
 
 
 /**
@@ -94,19 +95,29 @@ typedef struct
 	AlgLprPoint arr[4];//0,1,2,3 左上角为0，依次按顺时针排序4个点组成的四边形
 } AlgLprPolygonArea;
 
+typedef struct 
+{
+	int nMax;			// 检测的最大车牌宽度，以像素为单位//
+	int nMin;			// 检测的最小车牌宽度，以像素为单位//
+} AlgLprPlateWidth;
+
+typedef struct 
+{
+	int nTrigMode;			// 识别结果输出触发模式
+	int nTrigInterval;		// 相同车牌触发时间间隔	
+	int nVehicleDirection;		// 车辆通过方向
+	AlgLprPolygonArea trigArea;	// 触发区域(虚拟线圈)
+} AlgLprTriggerInfo;
+
 typedef struct
 {
-	unsigned int chId;			// 通道ID
-	char szProvince[16];		// 默认省份	
-	int nTrigerMode;			// 识别结果输出触发模式
-	int nTriggerInterval;		// 相同车牌触发时间间隔	
-	int nPlateTypeSupt;			// 支持的车牌类型
-	int nMaxPlateWidth;			// 检测的最大车牌宽度，以像素为单位//
-	int nMinPlateWidth;			// 检测的最小车牌宽度，以像素为单位//
-	int nVehicleDirection;		// 车辆通过方向
-	AlgLprPolygonArea recogArea;// 识别区域//
-	AlgLprPolygonArea trigArea;	// 触发区域(虚拟线圈)
-	
+	//unsigned int chId;			// 通道ID
+	char szProvince[16];			// 默认省份	
+	int nPlateTypeSupt;				// 支持的车牌类型
+	AlgLprPlateWidth plateWidth;	// 最大最小车牌宽度	
+	AlgLprPolygonArea recogArea;	// 识别区域//
+	AlgLprTriggerInfo trigInfo;		// 算法输出触发条件
+
 } AlgVehicleLink_ThPlateIdDynParams;
 
 
@@ -169,13 +180,12 @@ typedef struct
     unsigned char bShadow;    
     //unsigned char bIsAutoSlope;
     //unsigned char nSlopeDetectRange;
-    char szProvince[16];
     unsigned int dFormat;
     int pnMinFreeSRAM;
     int pnMinFreeSDRAM;
 
-	int nMaxPlateWidth;
-	int nMinPlateWidth;
+    char szProvince[16];
+    AlgLprPlateWidth plateWidth;
 
     TH_RECT rcDetect;
     TH_RECT rcTrig;
@@ -300,25 +310,25 @@ static inline void AlgVehicleLink_CreateParams_Init(AlgVehicleLink_CreateParams 
     pPrm->thPlateIdCreateParams.chDefaultParams[0].dFormat = 2;
     pPrm->thPlateIdCreateParams.chDefaultParams[0].nPlateLocate_Th = 5;
     pPrm->thPlateIdCreateParams.chDefaultParams[0].nOCR_Th = 2;
-    //pPrm->thPlateIdCreateParams.chDefaultParams[0].szProvince = "粤湘赣";
+    strcpy(pPrm->thPlateIdCreateParams.chDefaultParams[0].szProvince, "粤湘赣");
     pPrm->thPlateIdCreateParams.chDefaultParams[0].nContrast = 0;
     pPrm->thPlateIdCreateParams.chDefaultParams[0].bLeanCorrection = 1;
     pPrm->thPlateIdCreateParams.chDefaultParams[0].bShadow = 1;    
     pPrm->thPlateIdCreateParams.chDefaultParams[0].pnMinFreeSDRAM = 0;
     pPrm->thPlateIdCreateParams.chDefaultParams[0].pnMinFreeSRAM = 0;
 
-	pPrm->thPlateIdCreateParams.chDefaultParams[0].nMaxPlateWidth = 500;
-	pPrm->thPlateIdCreateParams.chDefaultParams[0].nMinPlateWidth = 80;
+	pPrm->thPlateIdCreateParams.chDefaultParams[0].plateWidth.nMax = 500;
+	pPrm->thPlateIdCreateParams.chDefaultParams[0].plateWidth.nMin = 80;
    
-    pPrm->thPlateIdCreateParams.chDefaultParams[0].rcDetect.top = 50;
-    pPrm->thPlateIdCreateParams.chDefaultParams[0].rcDetect.bottom = 1080 - 50;
-    pPrm->thPlateIdCreateParams.chDefaultParams[0].rcDetect.left = 50;
-    pPrm->thPlateIdCreateParams.chDefaultParams[0].rcDetect.right = 1920 - 50;
+    pPrm->thPlateIdCreateParams.chDefaultParams[0].rcDetect.top = 200;
+    pPrm->thPlateIdCreateParams.chDefaultParams[0].rcDetect.bottom = 1080 - 200;
+    pPrm->thPlateIdCreateParams.chDefaultParams[0].rcDetect.left = 300;
+    pPrm->thPlateIdCreateParams.chDefaultParams[0].rcDetect.right = 1920 - 300;
 
-    pPrm->thPlateIdCreateParams.chDefaultParams[0].rcTrig.top = 400;
-    pPrm->thPlateIdCreateParams.chDefaultParams[0].rcTrig.bottom = 1080 - 400;
-    pPrm->thPlateIdCreateParams.chDefaultParams[0].rcTrig.left = 200;
-    pPrm->thPlateIdCreateParams.chDefaultParams[0].rcTrig.right = 1920 - 200;
+    pPrm->thPlateIdCreateParams.chDefaultParams[0].rcTrig.top = 401;
+    pPrm->thPlateIdCreateParams.chDefaultParams[0].rcTrig.bottom = 1080 - 401;
+    pPrm->thPlateIdCreateParams.chDefaultParams[0].rcTrig.left = 201;
+    pPrm->thPlateIdCreateParams.chDefaultParams[0].rcTrig.right = 1920 - 201;
 
     pPrm->thPlateIdCreateParams.numBufPerCh = 1 ;
     pPrm->thPlateIdCreateParams.numValidChForTHPLATEID = 1;

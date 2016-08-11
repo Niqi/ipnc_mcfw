@@ -63,9 +63,10 @@ typedef struct osd_Bmp_Global_Info_s {
 	UInt32  	timeInfo[7];				/* 数字时间信息 */
 	TSWOSD_Char *bmpTimeInfo;					/* bmp时间信息 */
 	TSWOSD_Char *auxBmpTimeInfo;
-	TSWOSD_Char *thirdChannelBmpInfo;
-	TSWOSD_Char *osdInfo;					/* 主码流字符串图片信息 */
-	TSWOSD_Char *auxOsdInfo;				/* 最后保存的辅码流的图片信息指针 */
+	TSWOSD_Char *thirdBmpTimeInfo;
+	TSWOSD_Char *bmpTextInfo;					/* 主码流字符串图片信息 */
+	TSWOSD_Char *auxBmpTextInfo;				/* 最后保存的辅码流的图片信息指针 */
+	TSWOSD_Char *thirdBmpTextInfo;
 }TOsd_Global_Info;
 
 typedef struct {

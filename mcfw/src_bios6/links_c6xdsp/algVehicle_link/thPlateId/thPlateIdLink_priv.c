@@ -16,6 +16,10 @@ static UInt8 gThPlateIdScratchId = 1;
 static Int32 AlgVehicleLink_ThPlateIdalgSetChPrm(AlgVehicleLink_ThPlateIdchPrm    *pThPlateIdChPrm,
                             AlgVehicleLink_ThPlateIdChParams * params);
 
+static Int32 AlgVehicleLink_ThPlateIdalgSetDynPrm(AlgVehicleLink_ThPlateIdDynPrm    *pThPlateIdChPrm,
+                            AlgVehicleLink_ThPlateIdChParams * params);
+
+
 Int32 AlgVehicleLink_ThPlateIdalgCreate(AlgVehicleLink_ThPlateIdObj * pObj)
 {
     Int32               status, chId, ThPlateIdChId;
@@ -23,6 +27,7 @@ Int32 AlgVehicleLink_ThPlateIdalgCreate(AlgVehicleLink_ThPlateIdObj * pObj)
     THPLATEIDALG_chPrm            chDefaultParams[1];
     AlgVehicleLink_ThPlateIdChParams *pChLinkPrm;
     AlgVehicleLink_ThPlateIdchPrm    *pThPlateIdChPrm;
+    AlgVehicleLink_ThPlateIdDynPrm    *pThPlateIdDynPrm;	
     Int32 scratchId = gThPlateIdScratchId;    
     IALG_Fxns           *algFxns = (IALG_Fxns *)&THPLATEIDALG_TI_IALG;
     IRES_Fxns           *resFxns = &THPLATEIDALG_TI_IRES;
@@ -31,7 +36,7 @@ Int32 AlgVehicleLink_ThPlateIdalgCreate(AlgVehicleLink_ThPlateIdObj * pObj)
     Vps_printf(" %d: THPLATEIDLINK    : Create in progress !!!\n",
                         Utils_getCurTimeInMsec());
 #endif
-	pObj->setConfigFlag = 0;
+	pObj->setConfigBitMask = 0;
 	pObj->getConfigFlag = 0;
 
     pObj->chObj[0].inFrameProcessCount = 0;
@@ -94,7 +99,6 @@ Int32 AlgVehicleLink_ThPlateIdalgCreate(AlgVehicleLink_ThPlateIdObj * pObj)
         chl->height     = pObj->createArgs.maxHeight;
         chl->stride     = pObj->createArgs.maxStride;
         chl->curFrame = NULL;
-
         chl->cImageFormat       = chPrm->cImageFormat;
         chl->bVertFlip              = chPrm->bVertFlip;
         chl->bDwordAligned      = chPrm->bDwordAligned;
@@ -103,19 +107,14 @@ Int32 AlgVehicleLink_ThPlateIdalgCreate(AlgVehicleLink_ThPlateIdObj * pObj)
         chl->nOCR_Th                = chPrm->nOCR_Th;
         chl->nContrast                  = chPrm->nContrast;
         chl->bLeanCorrection        = chPrm->bLeanCorrection;
-        chl->bShadow                = chPrm->bShadow;        
-        
+        chl->bShadow                = chPrm->bShadow;   
         memcpy(&chl->szProvince[0], &chPrm->szProvince[0], 16);
-
         chl->dFormat = chPrm->dFormat;
         chl->pnMinFreeSRAM = chPrm->pnMinFreeSRAM;
         chl->pnMinFreeSDRAM = chPrm->pnMinFreeSDRAM; 
-
-		chl->nMaxPlateWidth = chPrm->nMaxPlateWidth;
-		chl->nMinPlateWidth = chPrm->nMinPlateWidth;		
-
+		chl->nMaxPlateWidth = chPrm->plateWidth.nMax;
+		chl->nMinPlateWidth = chPrm->plateWidth.nMin;		
         //memcpy(&chl->algConfig, &chPrm->algConfig, sizeof(TH_PlateIDCfg));
-
         chl->rcDetect.top =         chPrm->rcDetect.top;
         chl->rcDetect.bottom =    chPrm->rcDetect.bottom;
         chl->rcDetect.left =         chPrm->rcDetect.left;
@@ -150,13 +149,13 @@ Int32 AlgVehicleLink_ThPlateIdalgCreate(AlgVehicleLink_ThPlateIdObj * pObj)
         pObj->chObj[ThPlateIdChId].frameSkipCtx.outputFrameRate = pObj->createArgs.outputFrameRate;
 
         pThPlateIdChPrm = &pObj->chParams[ThPlateIdChId];
-
         pChLinkPrm = &pObj->createArgs.chDefaultParams[ThPlateIdChId];
-
-        pThPlateIdChPrm->chId = pChLinkPrm->chId;
-       
+		pThPlateIdDynPrm = &pObj->thPlateIdDynParams[ThPlateIdChId];
+        pThPlateIdChPrm->chId = pChLinkPrm->chId; 
+		
         AlgVehicleLink_ThPlateIdalgSetChPrm(pThPlateIdChPrm, pChLinkPrm);
-
+		AlgVehicleLink_ThPlateIdalgSetDynPrm(pThPlateIdDynPrm, pChLinkPrm);
+		
         status = AlgVehicleLink_ThPlateIdInit(pObj);
         if(FVID2_SOK != status)
         {
@@ -246,12 +245,12 @@ Int32 AlgVehicleLink_ThPlateIdalgProcessData(AlgVehicleLink_ThPlateIdObj * pObj,
 	THPLATEIDALG_Status 	 chanStatus; 
 	THPLATEIDALG_Result 	 *pThPlateIdResult;
 	UInt32			chanID;
-	AlgVehicleLink_ThPlateIdchPrm * chPrm;
+	//AlgVehicleLink_ThPlateIdchPrm * chPrm;
 	IRES_Fxns		*resFxns = &THPLATEIDALG_TI_IRES;
 	pThPlateIdResult = &pObj->chObj[chIdx].thPlateIdResult;	
 
-    pObj->chParams[chIdx].curFrame = pFrame->addr[0][0];
-    pObj->chParams[chIdx].curFrameUV = pFrame->addr[0][1];
+    //pObj->chParams[chIdx].curFrame = pFrame->addr[0][0];
+    //pObj->chParams[chIdx].curFrameUV = pFrame->addr[0][1];
 
 	
 	/* Activate the Algorithm */
@@ -263,13 +262,13 @@ Int32 AlgVehicleLink_ThPlateIdalgProcessData(AlgVehicleLink_ThPlateIdObj * pObj,
 	RMAN_activateAllResources((IALG_Handle)pObj->algHndl, resFxns, gThPlateIdScratchId);	
 
 	chanID = pObj->chParams[chIdx].chId;
-	chPrm = &(pObj->chParams[chIdx]);
+	//chPrm = &(pObj->chParams[chIdx]);
 
 	pThPlateIdResult->nNumberOfVehicle= 0;
 		
 	chanStatus = THPLATEIDALG_TI_process(pObj->algHndl, chanID,
-											(unsigned char*)chPrm->curFrame,
-											(unsigned char*)chPrm->curFrameUV, pThPlateIdResult);
+											(unsigned char*)pFrame->addr[0][0],
+											(unsigned char*)pFrame->addr[0][1], pThPlateIdResult);
 
 	/*
 	* Deactivate All Resources
@@ -293,6 +292,75 @@ Int32 AlgVehicleLink_ThPlateIdalgProcessData(AlgVehicleLink_ThPlateIdObj * pObj,
 
 }
 
+Int32 AlgVehicleLink_ThPlateIdalgSetConfig(AlgVehicleLink_ThPlateIdObj * algObj)
+{
+    Int32 status = FVID2_SOK;
+    UInt32 bitMask;
+    Bool setConfigFlag = FALSE;
+    UInt key;
+
+    key = Hwi_disable();
+    bitMask = algObj->setConfigBitMask;
+
+	Vps_printf("mask_b: %d \n", algObj->setConfigBitMask);
+
+    /* Set the modified trigger info */
+    if ((bitMask >> ALGVEHICLE_LINK_SETCONFIG_BITMASK_TRIGG_INFO) & 0x1)
+    {
+    	algObj->thPlateIdDynParams[0].trigArea.left = algObj->chParams[0].rcTrig.left;
+    	algObj->thPlateIdDynParams[0].trigArea.right= algObj->chParams[0].rcTrig.right;
+    	algObj->thPlateIdDynParams[0].trigArea.top= algObj->chParams[0].rcTrig.top;
+    	algObj->thPlateIdDynParams[0].trigArea.bottom= algObj->chParams[0].rcTrig.bottom;
+		algObj->thPlateIdDynParams[0].nTrigInterval = algObj->chParams[0].nTrigInterval;
+		algObj->thPlateIdDynParams[0].nTrigMode = algObj->chParams[0].nTrigMode;
+		algObj->thPlateIdDynParams[0].nVehicleDirection = algObj->chParams[0].nVehicleDirection;		
+    	algObj->setConfigBitMask &= (ALGVEHICLE_LINK_SETCONFIG_BITMASK_RESET_VALUE ^
+                                     (1 << ALGVEHICLE_LINK_SETCONFIG_BITMASK_TRIGG_INFO));	
+        setConfigFlag = TRUE;
+		Vps_printf("mask_trig: %d,%d:%d:%d:%d \n", algObj->setConfigBitMask, algObj->chParams[0].rcTrig.left,
+																algObj->chParams[0].rcTrig.right,
+																algObj->chParams[0].rcTrig.top,
+																algObj->chParams[0].rcTrig.bottom);
+    }	
+
+    /* Set the modified recog area */
+    if ((bitMask >> ALGVEHICLE_LINK_SETCONFIG_BITMASK_RECOG_AREA) & 0x1)
+    {
+    	AlgVehicleLink_ThPlateIdAlgSetRecogArea(algObj);
+        algObj->setConfigBitMask &= (ALGVEHICLE_LINK_SETCONFIG_BITMASK_RESET_VALUE ^
+                                     (1 << ALGVEHICLE_LINK_SETCONFIG_BITMASK_RECOG_AREA));	
+        setConfigFlag = TRUE;
+		Vps_printf("mask_recog: %d \n", algObj->setConfigBitMask);
+    }	
+
+    /* Set the modified default province */
+    if ((bitMask >> ALGVEHICLE_LINK_SETCONFIG_BITMASK_DEFAULT_PROVINCE) & 0x1)
+    {
+    	AlgVehicleLink_ThPlateIdAlgSetProvinceOrder(algObj);
+        algObj->setConfigBitMask &= (ALGVEHICLE_LINK_SETCONFIG_BITMASK_RESET_VALUE ^
+                                     (1 << ALGVEHICLE_LINK_SETCONFIG_BITMASK_DEFAULT_PROVINCE));	
+        setConfigFlag = TRUE;
+		Vps_printf("mask_prov: %d \n", algObj->setConfigBitMask);
+    }
+
+    /* Set the modified max min plate width */
+    if ((bitMask >> ALGVEHICLE_LINK_SETCONFIG_BITMASK_PLATE_WIDTH) & 0x1)
+    {
+    	AlgVehicleLink_ThPlateIdAlgSetPlateWidth(algObj);
+        algObj->setConfigBitMask &= (ALGVEHICLE_LINK_SETCONFIG_BITMASK_RESET_VALUE ^
+                                     (1 << ALGVEHICLE_LINK_SETCONFIG_BITMASK_PLATE_WIDTH));	
+        setConfigFlag = TRUE;
+		Vps_printf("mask_plateWidth: %d \n", algObj->setConfigBitMask);
+    }	
+
+    Hwi_restore(key);
+
+    if (setConfigFlag)
+    {
+    }
+
+	return (status);
+}
 
 static Int32 AlgVehicleLink_ThPlateIdalgSetChPrm(AlgVehicleLink_ThPlateIdchPrm    *pThPlateIdChPrm,
                             AlgVehicleLink_ThPlateIdChParams * params)
@@ -315,8 +383,8 @@ static Int32 AlgVehicleLink_ThPlateIdalgSetChPrm(AlgVehicleLink_ThPlateIdchPrm  
     pThPlateIdChPrm->pnMinFreeSRAM = params->pnMinFreeSRAM;
     pThPlateIdChPrm->pnMinFreeSDRAM = params->pnMinFreeSDRAM; 
 
-	pThPlateIdChPrm->nMaxPlateWidth = params->nMaxPlateWidth;
-	pThPlateIdChPrm->nMinPlateWidth = params->nMinPlateWidth;	
+	pThPlateIdChPrm->plateWidth.nMax = params->plateWidth.nMax;
+	pThPlateIdChPrm->plateWidth.nMin = params->plateWidth.nMin;	
     
     //memcpy(&pThPlateIdChPrm->algConfig, &params->algConfig, sizeof(TH_PlateIDCfg));
 
@@ -336,6 +404,32 @@ static Int32 AlgVehicleLink_ThPlateIdalgSetChPrm(AlgVehicleLink_ThPlateIdchPrm  
  
     return FVID2_SOK;
 }
+
+static Int32 AlgVehicleLink_ThPlateIdalgSetDynPrm(AlgVehicleLink_ThPlateIdDynPrm    *pThPlateIdDynPrm,
+                            AlgVehicleLink_ThPlateIdChParams * params)
+{
+    pThPlateIdDynPrm->chId = params->chId;
+    memcpy(pThPlateIdDynPrm->szProvince, params->szProvince, 16);
+    pThPlateIdDynPrm->nPlateTypeSupt = 0;
+    pThPlateIdDynPrm->nTrigMode = 0;
+    pThPlateIdDynPrm->nTrigInterval = 0;
+    pThPlateIdDynPrm->nVehicleDirection = 0;
+    pThPlateIdDynPrm->plateWidth.nMax = params->plateWidth.nMax;
+    pThPlateIdDynPrm->plateWidth.nMin = params->plateWidth.nMin;	
+    pThPlateIdDynPrm->recogArea.top = params->rcDetect.top;
+    pThPlateIdDynPrm->recogArea.bottom = params->rcDetect.bottom;
+    pThPlateIdDynPrm->recogArea.left = params->rcDetect.left;
+    pThPlateIdDynPrm->recogArea.right = params->rcDetect.right;  
+    pThPlateIdDynPrm->trigArea.top = params->rcTrig.top;
+    pThPlateIdDynPrm->trigArea.bottom = params->rcTrig.bottom;
+    pThPlateIdDynPrm->trigArea.left = params->rcTrig.left;
+    pThPlateIdDynPrm->trigArea.right = params->rcTrig.right;
+
+    Vps_printf( "THPLATEIDLINK    :SetDynPrm\n");
+ 
+    return FVID2_SOK;
+}
+
 
 
 Int32 AlgVehicleLink_ThPlateIdInit(AlgVehicleLink_ThPlateIdObj *pThPlateIdAlgLinkObj)
@@ -753,6 +847,45 @@ Int32 AlgVehicleLink_ThPlateIdAlgSetRecogArea (AlgVehicleLink_ThPlateIdObj *pThP
    
     return FVID2_SOK;
 }
+
+
+Int32 AlgVehicleLink_ThPlateIdAlgSetPlateWidth (AlgVehicleLink_ThPlateIdObj *pThPlateIdAlgLinkObj)
+{
+    UInt32 chanID;
+    THPLATEIDALG_chPrm       chanParam;
+    AlgVehicleLink_ThPlateIdchPrm * chPrm;    
+    THPLATEIDALG_Status      chanStatus;
+
+    chPrm = &(pThPlateIdAlgLinkObj->chParams[0]); 
+    chanID = chPrm->chId;
+	
+    chanParam.nMaxPlateWidth = chPrm->plateWidth.nMax;
+    chanParam.nMinPlateWidth = chPrm->plateWidth.nMin;	
+
+    /* Activate the Algorithm */
+    DSKT2_activateAlg(gThPlateIdScratchId, (IALG_Handle)pThPlateIdAlgLinkObj->algHndl);    
+    
+    chanStatus = THPLATEIDALG_TI_setPrms(pThPlateIdAlgLinkObj->algHndl, chanID, 
+											THPLATEID_SET_PLATE_WIDTH, &chanParam); 
+
+    /* Deactivate algorithm */
+    DSKT2_deactivateAlg(gThPlateIdScratchId, (IALG_Handle)pThPlateIdAlgLinkObj->algHndl);
+
+    if(chanStatus != THPLATEID_NO_ERROR)
+    {
+#ifdef SYSTEM_DEBUG_THPLATEID
+        Vps_printf(" %d: THPLATEIDLINK    : ERROR: SetProvinceOrder (chanID = %d) !!!\n",
+                  Utils_getCurTimeInMsec(), chanID );
+#endif
+
+        return FVID2_EFAIL;
+    }    
+   
+    Vps_printf( " \n");
+   
+    return FVID2_SOK;
+}
+
 
 
 Int32 AlgVehicleLink_ThPlateIdprintStatistics (AlgVehicleLink_ThPlateIdObj *pObj, Bool resetAfterPrint)

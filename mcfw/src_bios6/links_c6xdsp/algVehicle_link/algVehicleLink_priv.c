@@ -131,6 +131,7 @@ static Int32 AlgVehicleLink_CreatOSDFrame(UInt32 timeStamp,const TH_PlateIDResul
 	return FVID2_SOK;
 }
 
+
 Int32 AlgVehicleLink_algProcessData(AlgVehicleLink_Obj * pObj)
 {
     UInt32 status = FVID2_SOK;	
@@ -154,31 +155,31 @@ Int32 AlgVehicleLink_algProcessData(AlgVehicleLink_Obj * pObj)
             /* THPLATEID ALG */
             if (pObj->createArgs.enableThPlateIdAlg)
             {
-				if(pAlgObj->setConfigFlag)
-				{
-					//set dynamic parameters;
-				}
-			
+            	if(0 != pAlgObj->setConfigBitMask)
+            	{
+					AlgVehicleLink_ThPlateIdalgSetConfig(pAlgObj);
+            	}
+
 	            /* statist process time start */
 	            start = Utils_getCurTimeInUsec();  
 
                 status = AlgVehicleLink_ThPlateIdalgProcessData(pAlgObj, pFullFrame, &pObj->outObj[0].bufOutQue);
-				
+				//Vps_printf("\n THPLATEIDALG:f%d,t%d \n", pAlgObj->chObj[0].inFrameProcessCount,pAlgObj->chObj[0].totalFrameCount);
 	            /* statist process time end */
-	            end = Utils_getCurTimeInUsec();				
+	            end = Utils_getCurTimeInUsec();
 
 				if( FVID2_SOK == status)
 				{
-					if(thPlateResult->nConfidence > 50)
+					if(thPlateResult->nConfidence > 0)
 					{
-						//Vps_printf("\n THPLATEIDALG: %s, tm:%ld \n", thPlateResult->license, end - start);
 						thPlateRectCenterX = (thPlateResult->rcLocation.left + thPlateResult->rcLocation.right)>>1;
 						thPlateRectCenterY = (thPlateResult->rcLocation.top+ thPlateResult->rcLocation.bottom)>>1;
-						
-						if( (thPlateRectCenterX < pAlgObj->chParams[0].rcTrig.right 
-								&& thPlateRectCenterX > pAlgObj->chParams[0].rcTrig.left)
-							&& (thPlateRectCenterY > pAlgObj->chParams[0].rcTrig.top 
-								&& thPlateRectCenterY < pAlgObj->chParams[0].rcTrig.bottom) )
+						Vps_printf("\n THPLATEIDALG: %s, (%d,%d),f%d,t%d \n", thPlateResult->license, thPlateRectCenterX, thPlateRectCenterY, 
+																		pAlgObj->chObj[0].inFrameProcessCount,pAlgObj->chObj[0].totalFrameCount);						
+						if( (thPlateRectCenterX < pAlgObj->thPlateIdDynParams[0].trigArea.right 
+								&& thPlateRectCenterX > pAlgObj->thPlateIdDynParams[0].trigArea.left)
+							&& (thPlateRectCenterY > pAlgObj->thPlateIdDynParams[0].trigArea.top 
+								&& thPlateRectCenterY < pAlgObj->thPlateIdDynParams[0].trigArea.bottom) )
 						{
 							pAlgObj->chObj[0].inFrameProcessCount++;
 							if(1 == pAlgObj->chObj[0].inFrameProcessCount)
@@ -215,7 +216,7 @@ Int32 AlgVehicleLink_algProcessData(AlgVehicleLink_Obj * pObj)
             pAlgObj->chObj[0].totalProcessTime += (end - start);
             pAlgObj->chObj[0].processFrCnt ++;
 
-			if(pAlgObj->chObj[0].totalFrameCount > 200)//200帧以内其它结果扔掉
+			if(pAlgObj->chObj[0].totalFrameCount > 30)//30帧以内其它结果扔掉
 			{
 				pAlgObj->chObj[0].inFrameProcessCount = 0;
 			}

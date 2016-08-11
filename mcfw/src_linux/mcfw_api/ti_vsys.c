@@ -1606,69 +1606,49 @@ Int32 Vsys_setNoiseFilter(UInt32 channelId,UI_NF_MODE noisefilterMode)
 
 Int32 Vsys_setSwOsdBmp(VSYS_SWOSD_SETBMP swOsdSetPrm,Vsys_swOsdPrm **ppSwOsdPrm)
 {
-	SwosdLink_GuiParams swOsdGuiPrm_datetime,swOsdGuiPrm_aux_datetime;
+	UInt32 cmdID = 0;
+	SwosdLink_GuiParams swOsdGuiPrm;
 
+	swOsdGuiPrm.bmp = (TOSD_Char_Swosd *)(*ppSwOsdPrm)->bmp;
+	if(swOsdGuiPrm.bmp == NULL){
+		OSA_ERROR("swOsdGuiPrm_datetime.bmp == NULL!\n");
+		return OSA_EFAIL;
+	}
 	switch (swOsdSetPrm)
 	{
 		case VSYS_OSD_DATETIME_BMP:
-			swOsdGuiPrm_datetime.bmp = (TOSD_Char_Swosd *)(*ppSwOsdPrm)->bmp;
-			if(swOsdGuiPrm_datetime.bmp == NULL){
-				OSA_ERROR("swOsdGuiPrm_datetime.bmp == NULL!\n");
-				return OSA_EFAIL;
-			}
-			if (gVsysModuleContext.swOsdId != SYSTEM_LINK_ID_INVALID){
-				System_linkControl(gVsysModuleContext.swOsdId,
-								   SWOSDLINK_SETBMP_DATETIME,
-								   swOsdGuiPrm_datetime.bmp,
-								   sizeof(TOSD_Char_Swosd) * (*ppSwOsdPrm)->osd_bmp_num,
-								   TRUE);
-
-			}
-			free(swOsdGuiPrm_datetime.bmp);
-			swOsdGuiPrm_datetime.bmp = NULL;
-			free(*ppSwOsdPrm);
-			*ppSwOsdPrm = NULL;
+			cmdID = SWOSDLINK_SETBMP_DATETIME;
 			break;
 		case VSYS_OSD_AUX_DATETIME_BMP:
-			swOsdGuiPrm_aux_datetime.bmp = (TOSD_Char_Swosd *)(*ppSwOsdPrm)->bmp;
-			if(swOsdGuiPrm_aux_datetime.bmp == NULL){
-				OSA_ERROR("swOsdGuiPrm_aux_datetime.bmp == NULL!\n");
-				return OSA_EFAIL;
-			}
-			if (gVsysModuleContext.swOsdId != SYSTEM_LINK_ID_INVALID){
-				System_linkControl(gVsysModuleContext.swOsdId,
-							   SWOSDLINK_SETBMP_AUX_DATETIME,
-							   swOsdGuiPrm_aux_datetime.bmp,
-						   	   sizeof(TOSD_Char_Swosd) * (*ppSwOsdPrm)->osd_bmp_num,
-							   TRUE);
-			}
-	    	free(swOsdGuiPrm_aux_datetime.bmp);
-			swOsdGuiPrm_aux_datetime.bmp = NULL;
-			free(*ppSwOsdPrm);
-			*ppSwOsdPrm = NULL;
+			cmdID = SWOSDLINK_SETBMP_DATETIME_AUX;
 			break;
 		case VSYS_OSD_LPRINFO_BMP:
-			swOsdGuiPrm_aux_datetime.bmp = (TOSD_Char_Swosd *)(*ppSwOsdPrm)->bmp;
-			if(swOsdGuiPrm_aux_datetime.bmp == NULL){
-				OSA_ERROR("swOsdGuiPrm_aux_datetime.bmp == NULL!\n");
-				return OSA_EFAIL;
-			}			
-			if (gVsysModuleContext.swOsdId != SYSTEM_LINK_ID_INVALID){
-				System_linkControl(gVsysModuleContext.swOsdId,
-							   SWOSDLINK_SETBMP_LPRINFO,
-							   swOsdGuiPrm_aux_datetime.bmp,
-						   	   sizeof(TOSD_Char_Swosd) * (*ppSwOsdPrm)->osd_bmp_num,
-							   TRUE);
-			}
-	    	free(swOsdGuiPrm_aux_datetime.bmp);
-			swOsdGuiPrm_aux_datetime.bmp = NULL;
-			free(*ppSwOsdPrm);
-			*ppSwOsdPrm = NULL;
+			cmdID = SWOSDLINK_SETBMP_DATETIME_THIRD;
+			break;
+		case VSYS_OSD_USERTEXT_BMP:
+			cmdID = SWOSDLINK_SETBMP_USERTEXT;
+			break;
+		case VSYS_OSD_AUX_USERTEXT_BMP:
+			cmdID = SWOSDLINK_SETBMP_USERTEXT_AUX;
+			break;
+		case VSYS_OSD_LPRINFO_USERTEXT_BMP:
+			cmdID = SWOSDLINK_SETBMP_USERTEXT_THIRD;
 			break;
 		default:
 			break;
 	}
+	if (gVsysModuleContext.swOsdId != SYSTEM_LINK_ID_INVALID){
+		System_linkControl(gVsysModuleContext.swOsdId,
+						   cmdID,
+						   swOsdGuiPrm.bmp,
+						   sizeof(TOSD_Char_Swosd) * (*ppSwOsdPrm)->osd_bmp_num,
+						   TRUE);
 
+	}
+	free(swOsdGuiPrm.bmp);
+	swOsdGuiPrm.bmp = NULL;
+	free(*ppSwOsdPrm);
+	*ppSwOsdPrm = NULL;
 	return OSA_SOK;
 }
 
@@ -1690,17 +1670,16 @@ Int32 Vsys_setLprDynPrm(VSYS_LPR_DYN_PARAM_MODE lprPrmMode,
 			}			
 			break;
 		}
-		case VSYS_SET_LPR_TRIGGER_AREA:
+		case VSYS_SET_LPR_TRIGGER_INFO:
 		{
 			if (gVsysModuleContext.vehicleLprLinkId != SYSTEM_LINK_ID_INVALID)
 			{
 				System_linkControl(gVsysModuleContext.vehicleLprLinkId, 					// dest link id
-								   ALGVEHICLE_LINK_THPLATEID_CMD_SET_TRIGG_AREA, 			// cmd
-								   &lprDynPrm->trigArea,                  					// prm
-								   sizeof(AlgLprPolygonArea), 								// prm size
+								   ALGVEHICLE_LINK_THPLATEID_CMD_SET_TRIGG_INFO, 			// cmd
+								   &lprDynPrm->trigInfo,									// prm
+								   sizeof(AlgLprTriggerInfo), 								// prm size
 								   TRUE);                      								// wait for ack
 			}			
-			break;			
 			break;
 		}			
 		case VSYS_SET_LPR_TRIGGER_MODE:
@@ -1713,20 +1692,33 @@ Int32 Vsys_setLprDynPrm(VSYS_LPR_DYN_PARAM_MODE lprPrmMode,
 		}		
 		case VSYS_SET_LPR_DEFAULT_PROVINCE:
 		{
-			break;
+			if (gVsysModuleContext.vehicleLprLinkId != SYSTEM_LINK_ID_INVALID)
+			{
+				System_linkControl(gVsysModuleContext.vehicleLprLinkId, 					// dest link id
+								   ALGVEHICLE_LINK_THPLATEID_CMD_SET_PROVINCE_ORDER, 		// cmd
+								   &lprDynPrm->szProvince[0],               				// prm
+								   sizeof(lprDynPrm->szProvince), 							// prm size
+								   TRUE);                      								// wait for ack
+			}			
+			break;				
 		}		
 		case VSYS_SET_LPR_PLATE_TYPE:
 		{
 			break;
 		}		
-		case VSYS_SET_LPR_PLATE_MAX_WIDTH:
+		case VSYS_SET_LPR_PLATE_WIDTH:
 		{
+			if (gVsysModuleContext.vehicleLprLinkId != SYSTEM_LINK_ID_INVALID)
+			{
+				System_linkControl(gVsysModuleContext.vehicleLprLinkId, 					// dest link id
+								   ALGVEHICLE_LINK_THPLATEID_CMD_SET_PLATE_WIDTH,			// cmd
+								   &lprDynPrm->plateWidth,               					// prm
+								   sizeof(AlgLprPlateWidth), 								// prm size
+								   TRUE);                      								// wait for ack
+			}			
+			break;			
 			break;
-		}		
-		case VSYS_SET_LPR_PLATE_MIN_WIDTH:
-		{
-			break;
-		}		
+		}				
     	case VSYS_SET_LPR_MOVING_DIRECTION:
 		{
 			break;

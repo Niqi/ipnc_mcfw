@@ -49,6 +49,7 @@ typedef struct IpcComM3Link_Obj {
     UInt32 tskId;
     OSA_TskHndl tsk;
     CommunicationLink_CreateParams createArgs;
+	HOST_CB_FUNC callbackFunc;
 } IpcCommunicationLink_Obj;
 
 //Int32 IpcCommunicationLink_init();

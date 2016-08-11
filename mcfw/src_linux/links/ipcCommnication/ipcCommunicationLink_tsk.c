@@ -23,7 +23,7 @@ typedef struct TagCommunicationLprResualt{
 #endif
 
 //extern Int32 DramPlrInfoToFrame(Int32 frameAddr,Int8 *resString);
-extern Int32 HalCodecSetOsdDisplayLprInfo(UInt32 timeStamp, DSP_LPR_RESULT *result);
+//extern Int32 HalCodecSetOsdDisplayLprInfo(UInt32 timeStamp, DSP_LPR_RESULT *result);
 IpcCommunicationLink_Obj gIpcCommunicationLink_obj;
 
 static Int32 IpcCommunicationLink_create(IpcCommunicationLink_Obj * pObj,CommunicationLink_CreateParams * pPrm)
@@ -44,7 +44,7 @@ static Int32 IpcCommunicationLink_delete(IpcCommunicationLink_Obj * pObj)
     return OSA_SOK;
 }
 
-static Int32 IpcCommunicationParse(Ptr pPram)
+static Int32 IpcCommunicationParse(IpcCommunicationLink_Obj * pObj,Ptr pPram)
 {
 	TDSPLprResualt *ptsOsdPayload = NULL;
 	ptsOsdPayload = (TDSPLprResualt *)pPram;
@@ -58,7 +58,10 @@ static Int32 IpcCommunicationParse(Ptr pPram)
 			//OSA_printf("TCommunicationLprResualt.frameAddr = 0x%08x\n",ptsOsdPayload->frameAddr);
 			//OSA_printf("TCommunicationLprResualt.resualtStr = %s\n",ptsOsdPayload->lprResult.license);
 			//DramPlrInfoToFrame(lprRet->frameAddr,lprRet->resualtStr);
-			HalCodecSetOsdDisplayLprInfo(ptsOsdPayload->timeStamp, &ptsOsdPayload->lprResult);
+			//HalCodecSetOsdDisplayLprInfo(ptsOsdPayload->timeStamp, &ptsOsdPayload->lprResult);
+			if(pObj->callbackFunc != NULL){
+				pObj->callbackFunc(ptsOsdPayload->timeStamp, &ptsOsdPayload->lprResult);
+			}
 			break;
 		}
 		default:
@@ -104,7 +107,7 @@ static Int IpcCommunicationLink_tskMain(struct OSA_TskHndl * pTsk, OSA_MsgHndl *
                 break;
 
             case SYSTEM_CMD_NEW_DATA:
-				IpcCommunicationParse(pMsg->pPrm);
+				IpcCommunicationParse(pObj,pMsg->pPrm);
 				OSA_tskAckOrFreeMsg(pMsg, status);
                 break;
 
@@ -112,6 +115,12 @@ static Int IpcCommunicationLink_tskMain(struct OSA_TskHndl * pTsk, OSA_MsgHndl *
                 IpcCommunicationLink_stop(pObj);
                 OSA_tskAckOrFreeMsg(pMsg, status);
                 break;
+
+			case IPCCOMMUNICATION_CMD_CALLBACK:
+                pObj->callbackFunc = *(HOST_CB_FUNC *)pMsg->pPrm;
+                OSA_tskAckOrFreeMsg(pMsg, status);
+                break;
+
             default:
                 OSA_tskAckOrFreeMsg(pMsg, status);
                 break;
@@ -138,7 +147,7 @@ Int32 IpcCommunicationLink_init()
 
 	pObj = &gIpcCommunicationLink_obj;
 	memset(pObj, 0, sizeof(*pObj));
-	OSA_printf("Jerry %s %d\n",__FUNCTION__,__LINE__);
+
 	pObj->tskId = SYSTEM_MAKE_LINK_ID(procId, SYSTEM_HOST_LINK_ID_IPC_COMMUNICATION);
 
 	linkObj.pTsk = &pObj->tsk;
@@ -146,12 +155,12 @@ Int32 IpcCommunicationLink_init()
 	System_registerLink(pObj->tskId, &linkObj);
 
 	OSA_SNPRINTF(tskName, "IPC_COMMUNICATION%d", 0);
-	OSA_printf("Jerry %s %d\n",__FUNCTION__,__LINE__);
+
 	status = OSA_tskCreate(&pObj->tsk,
 	                       IpcCommunicationLink_tskMain,
 	                       OSA_THR_PRI_MAX,
 	                       IPC_LINK_TSK_STACK_SIZE, 0, pObj);
-	OSA_printf("Jerry %s %d\n",__FUNCTION__,__LINE__);
+
     OSA_assert(status == OSA_SOK);
 
     return status;

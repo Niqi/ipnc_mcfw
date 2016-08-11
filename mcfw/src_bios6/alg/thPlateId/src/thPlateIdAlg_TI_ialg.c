@@ -181,14 +181,11 @@ Int THPLATEIDALG_TI_initObj(IALG_Handle handle, const IALG_MemRec memTab[],
 
     thPlateIdAlgChParams->width = params->chDefaultParams->width;
     thPlateIdAlgChParams->height = params->chDefaultParams->height;
-
     thPlateIdAlgChParams->rcDetect.bottom = params->chDefaultParams[0].rcDetect.bottom;
     thPlateIdAlgChParams->rcDetect.top = params->chDefaultParams[0].rcDetect.top;
     thPlateIdAlgChParams->rcDetect.left = params->chDefaultParams[0].rcDetect.left;
-    thPlateIdAlgChParams->rcDetect.right = params->chDefaultParams[0].rcDetect.right;    
-
+    thPlateIdAlgChParams->rcDetect.right = params->chDefaultParams[0].rcDetect.right;  
     thPlateIdAlgChParams->curFrame= (unsigned char *)memTab[4].base;
-
 	thPlateIdAlgChParams->nMaxPlateWidth = params->chDefaultParams[0].nMaxPlateWidth;
 	thPlateIdAlgChParams->nMinPlateWidth = params->chDefaultParams[0].nMinPlateWidth;	
 
@@ -196,10 +193,10 @@ Int THPLATEIDALG_TI_initObj(IALG_Handle handle, const IALG_MemRec memTab[],
 
     if(NULL != pAlgConfig)
     {
-        pAlgConfig->nMinPlateWidth = 80;
-        pAlgConfig->nMaxPlateWidth = 500;
-        pAlgConfig->nMaxImageWidth = 1920;
-        pAlgConfig->nMaxImageHeight = 1080;
+        pAlgConfig->nMinPlateWidth = thPlateIdAlgChParams->nMinPlateWidth;
+        pAlgConfig->nMaxPlateWidth = thPlateIdAlgChParams->nMaxPlateWidth;
+        pAlgConfig->nMaxImageWidth = thPlateIdAlgChParams->width;
+        pAlgConfig->nMaxImageHeight = thPlateIdAlgChParams->height;
         pAlgConfig->bVertCompress = 0;
         pAlgConfig->bIsFieldImage = 0;		
         pAlgConfig->bOutputSingleFrame = 1;
@@ -207,9 +204,9 @@ Int THPLATEIDALG_TI_initObj(IALG_Handle handle, const IALG_MemRec memTab[],
         pAlgConfig->bIsNight = 0;	
         pAlgConfig->nImageFormat = ImageFormatYUV420COMPASS;
         pAlgConfig->pFastMemory = NULL;	
-        pAlgConfig->nFastMemorySize = 0x00004000; 
+        pAlgConfig->nFastMemorySize = FAST_MEMORY_SIZE; 
         pAlgConfig->pMemory = NULL;	
-        pAlgConfig->nMemorySize = 0x03200000;//0x02800000;  
+        pAlgConfig->nMemorySize = NORMAL_MEMORY_SIZE;
         pAlgConfig->DMA_DataCopy = NULL;	   
         pAlgConfig->Check_DMA_Finished = NULL;
         pAlgConfig->nLastError = 0; 
@@ -296,8 +293,8 @@ THPLATEIDALG_TI_process(void        *handle,
     rcDetect.top = thPlateIdAlgChParams->rcDetect.top;
     rcDetect.left = thPlateIdAlgChParams->rcDetect.left;
     rcDetect.right = thPlateIdAlgChParams->rcDetect.right; 
-	//pAlgConfig->nMaxPlateWidth = thPlateIdAlgChParams->nMaxPlateWidth;
-	//pAlgConfig->nMinPlateWidth = thPlateIdAlgChParams->nMinPlateWidth;
+	pAlgConfig->nMaxPlateWidth = thPlateIdAlgChParams->nMaxPlateWidth;
+	pAlgConfig->nMinPlateWidth = thPlateIdAlgChParams->nMinPlateWidth;
     nNumberOfVehicle = 1;
 
 	//reserved for down sampling resizer
@@ -399,7 +396,7 @@ THPLATEIDALG_TI_setPrms(void         	*handle,
         return THPLATEID_WARNING_PARAMETER_UNDERSPECIFIED;
     }
   
-    thPlateIdAlgChParams = (THPLATEIDALG_chPrm *)obj->thPlateIdAlgStaticCfg;
+    //thPlateIdAlgChParams = (THPLATEIDALG_chPrm *)obj->thPlateIdAlgStaticCfg;
     /* All run time dynamic params settings here */
 
     switch(setMode)
@@ -430,8 +427,11 @@ THPLATEIDALG_TI_setPrms(void         	*handle,
             break;
 
         case THPLATEID_SET_ENABLED_PLATE_FORMAT:
-            thPlateIdRetVal = TH_SetEnabledPlateFormat(pThPlateIdChPrm->dFormat,        
-                                                                                    pAlgConfig); 
+            thPlateIdRetVal = TH_SetEnabledPlateFormat(pThPlateIdChPrm->dFormat, pAlgConfig);
+            //thPlateIdRetVal = TH_SetEnabledPlateFormat(PARAM_ARMPOLICE_ON, pAlgConfig);
+            //thPlateIdRetVal = TH_SetEnabledPlateFormat(PARAM_TWOROWARMY_ON, pAlgConfig);
+            //thPlateIdRetVal = TH_SetEnabledPlateFormat(PARAM_ARMPOLICE2_ON, pAlgConfig);
+												
             Vps_printf("THPLATEIDALG:SET_ENABLED_PLATE_FORMAT,%d \n", pThPlateIdChPrm->dFormat);
             break;
 
@@ -446,7 +446,7 @@ THPLATEIDALG_TI_setPrms(void         	*handle,
         case THPLATEID_SET_PROVINCE_ORDER:
             thPlateIdRetVal = TH_SetProvinceOrder(&pThPlateIdChPrm->szProvince[0],        
                                                                         pAlgConfig);   
-            Vps_printf("THPLATEIDALG:SET_PROVINCE_ORDER,%s \n", pThPlateIdChPrm->szProvince);  
+            Vps_printf("THPLATEIDALG:SET_PROVINCE_ORDER,%s,%d \n", pThPlateIdChPrm->szProvince, thPlateIdRetVal);  
             break;            
 
         case THPLATEID_SET_CONTRAST:
@@ -473,7 +473,14 @@ THPLATEIDALG_TI_setPrms(void         	*handle,
 															pThPlateIdChPrm->rcDetect.right,
 															pThPlateIdChPrm->rcDetect.top,
 															pThPlateIdChPrm->rcDetect.bottom);            
-            break;              
+            break;  
+
+		case THPLATEID_SET_PLATE_WIDTH:
+			thPlateIdAlgChParams->nMaxPlateWidth = pThPlateIdChPrm->nMaxPlateWidth;
+			thPlateIdAlgChParams->nMinPlateWidth = pThPlateIdChPrm->nMinPlateWidth;		
+			Vps_printf("THPLATEIDALG:PLATE_WIDTH,%d,%d \n", pThPlateIdChPrm->nMaxPlateWidth,
+															pThPlateIdChPrm->nMinPlateWidth);
+			break;
         
         case THPLATEID_SET_AUTOSLOPERECTIFY_MODE:
             Vps_printf("THPLATEIDALG:SET_AUTOSLOPERECTIFY_MODE \n");

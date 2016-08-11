@@ -482,6 +482,9 @@ Void App_runDemo(Void)
 	gUI_mcfw_config.initDone = 1;
 
 	HalCodecSetOsdDisplayTime(FALSE, TRUE, 20, 20);
+	HalCodecSetOsdUserTextString(1, 1,"锦华发工业区", 800, 900);	
+	HalCodecSetOsdUserTextString(2, 1,"锦华发工业区", 800, 900);
+	Halcodec_RegisterCallbackFunc();
     OSA_printf("\nApplication Run Completed\n");
 }
 

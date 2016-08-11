@@ -33,6 +33,7 @@
 #include <mcfw/interfaces/link_api/system_const.h>
 #include <cmem.h>
 #include <str2bmp.h>
+#include <mcfw/interfaces/link_api/communicationIpcLink.h>
 
 //#define DYN_CODEC_CHANGE
 
@@ -251,6 +252,112 @@ Int32 HalCodecSetOsdDisplayTime(UInt8 u8EnableSteam0, UInt8 u8EnableSteam1, UInt
 	return OSA_SOK;
 }
 
+/*
+给用户设定字符串的接口
+u8StreamID 表示码流的通道,0-主码流 1080p, 1-辅码流 480p, 2-JPEG码流 1080p
+u8Enable 表示使能显示该码流的文本信息,0-disable,1-enable
+String 将要显示的字符串,限制字节为32Bytes,即最大允许16个汉字或者32个英文
+u32X,u32Y 显示字符串在图像的开始坐标,取值范围0-1000,
+*/
+Int32 HalCodecSetOsdUserTextString(UInt8 u8StreamID, UInt8 u8Enable, Int8 *String,UInt32 u32X, UInt32 u32Y)
+{
+	Int32 Int32Ret = FAILURE;
+	Int32 strBmpNum = 0;
+	UInt32 strLen=0,cmdID=STREAM_FEATURE_OSD_USERTEXT_AUX;
+	TOSDPrm mUserTextOSD;
+	Int8 mString[32]={0};
+
+	if((u8StreamID != 0) && (u8StreamID != 1) && (u8StreamID != 2)){
+		return OSA_EFAIL;
+	}
+	if((u8Enable != 0) && (u8Enable != 1)){
+		return OSA_EFAIL;
+	}
+	if(u8Enable == 1){
+		if(String == NULL){
+			return OSA_EFAIL;
+		}
+		if(strlen(String)>32){
+			return OSA_EFAIL;
+		}
+	}
+
+	if((u32X > 1000) || (u32Y > 1000)){
+		return OSA_EFAIL;
+	}
+
+    OSA_printf("HalCodecSetOsdUserTextString: ID=%d,EN=%d,STR=%s,(X,Y)=(%d,%d)\n",
+		u8StreamID, u8Enable,String,u32X,u32Y);
+
+	if(u8Enable){
+		memcpy(mString,String,strlen(String));
+	}
+	else{
+		memcpy(mString,"  ",2); /**/
+	}
+    strLen = strlen(mString);
+	if (OSA_SOK != GetStrToBmpNum(mString, strLen, &strBmpNum)){
+		OSA_ERROR("GetStrToBmpNum!!! \n");
+		return OSA_EFAIL;
+	}
+
+	/* main channel 1080p */
+	mUserTextOSD.bmpNum = strBmpNum;
+	mUserTextOSD.bmp = (osd_char *)calloc(strBmpNum, sizeof(osd_char));
+
+	if (NULL == mUserTextOSD.bmp){
+		OSA_ERROR("NULL == mUserTextOSD.bmp!!! \n");
+		return OSA_EFAIL;
+	}
+	/* 根据图像的分辨率确定显示的位置,即将0-1000映射到对应的坐标 */
+	/* 以下约定主码流和三码流的分辨率为1920x1080,赋码流为720x480*/
+	if(u8StreamID == 1)
+	{
+		Int32 x=0,y=0;
+		x = u32X*720/1000;
+		y = u32Y*480/1000;
+		if(x > (720-strBmpNum*16)) x = (720-strBmpNum*16);/* 16表示文字的宽和高*/
+		if(y > (480-16)) y = 480-16;
+		cmdID = STREAM_FEATURE_OSD_USERTEXT_AUX;
+		mUserTextOSD.bmp->len      = strBmpNum;
+		mUserTextOSD.bmp->fontsize = 0;
+		mUserTextOSD.bmp->textPosX = x;
+		mUserTextOSD.bmp->textPosY = y;
+		mUserTextOSD.bmp->flag     = u8Enable;
+		Int32Ret = Str2Bmp_String2BmpBuffer(mString, strLen, &mUserTextOSD.bmp, OSD_MENU_D1);
+	}
+	else {
+		Int32 x=0,y=0;
+		x = u32X*1920/1000;
+		y = u32Y*1080/1000;
+		if(x > (1920-strBmpNum*40)) x = (1920-strBmpNum*40);/* 40表示文字的宽和高*/
+		if(y > (1080-40)) y = 1080-40;
+		if(u8StreamID == 0)
+			cmdID = STREAM_FEATURE_OSD_USERTEXT;
+		else
+			cmdID = STREAM_FEATURE_OSD_USERTEXT_LPRINFO;
+		mUserTextOSD.bmp->len      = strBmpNum;
+		mUserTextOSD.bmp->fontsize = g_fontsize;
+		mUserTextOSD.bmp->textPosX = x;
+		mUserTextOSD.bmp->textPosY = y;
+		mUserTextOSD.bmp->flag     = u8Enable;
+		Int32Ret = Str2Bmp_String2BmpBuffer(mString, strLen, &mUserTextOSD.bmp, OSD_MENU_1080P);
+	}
+	if(Int32Ret != OSA_SOK){
+		OSA_ERROR("Str2Bmp_String2BmpBuffer!\n");
+		return OSA_EFAIL;
+	}
+	if(mUserTextOSD.bmp == NULL){
+		OSA_printf("mUserTextOSD.bmp == NULL!\n");
+		return OSA_EFAIL;
+	}
+	stream_feature_setup(cmdID, &mUserTextOSD);
+	mUserTextOSD.bmp = NULL;
+
+	OSA_printf( "HalCodecSetOsdUserTextString: Successful\n");
+	return OSA_SOK;
+}
+
 static Int32 getCurTimeInString(Int8 *str)
 {
 	time_t now;
@@ -307,7 +414,7 @@ Int32 HalCodecSetOsdDisplayLprInfo(UInt32 timeStamp, DSP_LPR_RESULT *result)
 	g_atOSDprm_lprInfo.bmp->len      = strBmpNum;
 	g_atOSDprm_lprInfo.bmp->fontsize = g_fontsize;
 	g_atOSDprm_lprInfo.bmp->textPosX = 20;
-	g_atOSDprm_lprInfo.bmp->textPosY = 20;
+	g_atOSDprm_lprInfo.bmp->textPosY = 10;
 	g_atOSDprm_lprInfo.bmp->flag     = TRUE;
 	g_atOSDprm_lprInfo.bmp->timeStamp = timeStamp;
 	g_atOSDprm_lprInfo.bmp->nRectLeftX = result->nRectLeftX;
@@ -329,6 +436,16 @@ Int32 HalCodecSetOsdDisplayLprInfo(UInt32 timeStamp, DSP_LPR_RESULT *result)
 	return OSA_SOK;
 }
 
+Int32 Halcodec_RegisterCallbackFunc(void)
+{
+	HOST_CB_FUNC tmpCb = (HOST_CB_FUNC)HalCodecSetOsdDisplayLprInfo;
+	System_linkControl(SYSTEM_HOST_LINK_ID_IPC_COMMUNICATION,
+							   IPCCOMMUNICATION_CMD_CALLBACK,
+							   &tmpCb,
+							   sizeof(HOST_CB_FUNC),
+							   TRUE);
+	return OSA_SOK;
+}
 /*
 static unsigned int GetTimeStamp(void)
 {
@@ -2335,16 +2452,34 @@ void *Msg_CTRL(void *args)
                     stream_feature_setup(STREAM_FEATURE_SET_LPR_RECOGNITION_AREA, &recogAreaPrm);
                     msgbuf.ret = 0;
                     break;
-                }				
-                case MSG_CMD_SET_LPR_TRIGGER_AREA:
+                }			
+                case MSG_CMD_SET_LPR_TRIGGER_INFO:
                 {
-                    AlgPolygonArea trggerAreaPrm;
-                    memcpy(&trggerAreaPrm, &msgbuf.mem_info, sizeof(trggerAreaPrm));
-					//OSA_printf("stramTrigArea:%d,%d \n", trggerAreaPrm.arr[1].x, trggerAreaPrm.arr[2].y);
-                    stream_feature_setup(STREAM_FEATURE_SET_LPR_TRIGGER_AREA, &trggerAreaPrm);
+                    AlgTriggerInfo triggerInfoPrm;
+                    memcpy(&triggerInfoPrm, &msgbuf.mem_info, sizeof(triggerInfoPrm));
+					OSA_printf("stramTrigInfoArea:%d,%d \n", triggerInfoPrm.trigArea.arr[1].x, triggerInfoPrm.trigArea.arr[2].y);
+                    stream_feature_setup(STREAM_FEATURE_SET_LPR_TRIGGER_INFO, &triggerInfoPrm);
                     msgbuf.ret = 0;
                     break;
                 }
+                case MSG_CMD_SET_LPR_PLATE_WIDTH:
+                {
+                    AlgPlateWidth plateWidthPrm;
+                    memcpy(&plateWidthPrm, &msgbuf.mem_info, sizeof(plateWidthPrm));
+					OSA_printf("stramPlateWidht:%d,%d \n", plateWidthPrm.nMax, plateWidthPrm.nMin);
+                    stream_feature_setup(STREAM_FEATURE_SET_LPR_PLATE_WIDTH, &plateWidthPrm);
+                    msgbuf.ret = 0;
+                    break;
+                }	
+                case MSG_CMD_SET_LPR_DEFAULT_PROVINCE:
+                {
+                    char szProvince[16];
+                    memcpy(&szProvince[0], &msgbuf.mem_info, sizeof(szProvince));
+					OSA_printf("stramPlateWidht:%s \n", szProvince);
+                    stream_feature_setup(STREAM_FEATURE_SET_LPR_DEFAULT_PROVINCE, &szProvince[0]);
+                    msgbuf.ret = 0;
+                    break;
+                }				
                 default:
                     DBG("default case \n");
                     break;
@@ -3165,26 +3300,12 @@ void stream_feature_setup(int nFeature, void *pParm)
             break;
         }
         case STREAM_FEATURE_DATETIMEPRM:
+		case STREAM_FEATURE_AUX_DATETIMEPRM:
+		case STREAM_FEATURE_LPRINFOPRM:
         {
-		#if 0
-            // VIDEO_streamSetDateTimePrm((DateTimePrm*)pParm);
-            DateTimePrm *pDateTimePrm = (DateTimePrm *) pParm;
-
-            swosdGuiPrm.dateFormat = pDateTimePrm->dateFormat;
-            swosdGuiPrm.datePos = pDateTimePrm->datePos;
-            swosdGuiPrm.timeFormat = pDateTimePrm->timeFormat;
-            swosdGuiPrm.timePos = pDateTimePrm->timePos;
-
-            swosdGuiPrm.streamId = 0;
-            Vsys_setSwOsdPrm(VSYS_SWOSDDATETIME, &swosdGuiPrm);
-
-            swosdGuiPrm.streamId = 1;
-            Vsys_setSwOsdPrm(VSYS_SWOSDDATETIME, &swosdGuiPrm);
-			break;
-		#else
 			Vsys_swOsdPrm *pswosdGuiPrm_datetime;
 			TOSDPrm *pPrm_datetime = (TOSDPrm *) pParm;
-
+			UInt32 cmdID = 0;
 			pswosdGuiPrm_datetime = ( Vsys_swOsdPrm *)malloc(sizeof(Vsys_swOsdPrm));
 			pswosdGuiPrm_datetime->streamId = 0;
 			pswosdGuiPrm_datetime->dateEnable = pPrm_datetime->dateEnable;
@@ -3199,57 +3320,61 @@ void stream_feature_setup(int nFeature, void *pParm)
 			if(pswosdGuiPrm_datetime->bmp == NULL){
 				OSA_ERROR("pswosdGuiPrm_datetime->bmp == NULL !\n");
 			}
-			Vsys_setSwOsdBmp(VSYS_OSD_DATETIME_BMP, &pswosdGuiPrm_datetime);
-			pswosdGuiPrm_datetime =NULL;
-			break;
-		#endif
-        }
-        case STREAM_FEATURE_AUX_DATETIMEPRM:
-        {
-			Vsys_swOsdPrm *pswosdGuiPrm_datetime;
-			TOSDPrm *pPrm_datetime = (TOSDPrm *) pParm;
-
-			pswosdGuiPrm_datetime = ( Vsys_swOsdPrm *)malloc(sizeof(Vsys_swOsdPrm));
-			pswosdGuiPrm_datetime->streamId = 0;
-			pswosdGuiPrm_datetime->dateEnable = pPrm_datetime->dateEnable;
-			pswosdGuiPrm_datetime->timeEnable = pPrm_datetime->timeEnable;
-			pswosdGuiPrm_datetime->logoEnable = pPrm_datetime->logoEnable;
-			pswosdGuiPrm_datetime->logoPos = pPrm_datetime->logoPos;
-			pswosdGuiPrm_datetime->textEnable = pPrm_datetime->textEnable;
-			pswosdGuiPrm_datetime->textPos = pPrm_datetime->textPos;
-			pswosdGuiPrm_datetime->detailedInfo = pPrm_datetime->detailedInfo;
-			pswosdGuiPrm_datetime->osd_bmp_num = pPrm_datetime->bmpNum;
-			pswosdGuiPrm_datetime->bmp = (TOSD_Char_sys *)pPrm_datetime->bmp;
-			if(pswosdGuiPrm_datetime->bmp == NULL){
-				OSA_ERROR("pswosdGuiPrm_datetime->bmp == NULL !\n");
+			switch(nFeature){
+				case STREAM_FEATURE_DATETIMEPRM:
+					cmdID = VSYS_OSD_DATETIME_BMP;
+					break;
+				case STREAM_FEATURE_AUX_DATETIMEPRM:
+					cmdID = VSYS_OSD_AUX_DATETIME_BMP;
+					break;
+				case STREAM_FEATURE_LPRINFOPRM:
+					cmdID = VSYS_OSD_LPRINFO_BMP;
+					break;
+				default:
+					break;
 			}
-			Vsys_setSwOsdBmp(VSYS_OSD_AUX_DATETIME_BMP, &pswosdGuiPrm_datetime);
+			Vsys_setSwOsdBmp(cmdID, &pswosdGuiPrm_datetime);
 			pswosdGuiPrm_datetime =NULL;
 			break;
         }
-        case STREAM_FEATURE_LPRINFOPRM:
+		case STREAM_FEATURE_OSD_USERTEXT:
+		case STREAM_FEATURE_OSD_USERTEXT_AUX:
+		case STREAM_FEATURE_OSD_USERTEXT_LPRINFO:
         {
-			Vsys_swOsdPrm *pswosdGuiPrm_datetime;
+			Vsys_swOsdPrm *pswosdGuiPrm_usertext;
 			TOSDPrm *pPrm_datetime = (TOSDPrm *) pParm;
-
-			pswosdGuiPrm_datetime = ( Vsys_swOsdPrm *)malloc(sizeof(Vsys_swOsdPrm));
-			pswosdGuiPrm_datetime->streamId = 0;
-			pswosdGuiPrm_datetime->dateEnable = pPrm_datetime->dateEnable;
-			pswosdGuiPrm_datetime->timeEnable = pPrm_datetime->timeEnable;
-			pswosdGuiPrm_datetime->logoEnable = pPrm_datetime->logoEnable;
-			pswosdGuiPrm_datetime->logoPos = pPrm_datetime->logoPos;
-			pswosdGuiPrm_datetime->textEnable = pPrm_datetime->textEnable;
-			pswosdGuiPrm_datetime->textPos = pPrm_datetime->textPos;
-			pswosdGuiPrm_datetime->detailedInfo = pPrm_datetime->detailedInfo;
-			pswosdGuiPrm_datetime->osd_bmp_num = pPrm_datetime->bmpNum;
-			pswosdGuiPrm_datetime->bmp = (TOSD_Char_sys *)pPrm_datetime->bmp;
-			if(pswosdGuiPrm_datetime->bmp == NULL){
-				OSA_ERROR("pswosdGuiPrm_datetime->bmp == NULL !\n");
+			UInt32 cmdID = 0;
+			pswosdGuiPrm_usertext = ( Vsys_swOsdPrm *)malloc(sizeof(Vsys_swOsdPrm));
+			pswosdGuiPrm_usertext->streamId = 0;
+			pswosdGuiPrm_usertext->dateEnable = pPrm_datetime->dateEnable;
+			pswosdGuiPrm_usertext->timeEnable = pPrm_datetime->timeEnable;
+			pswosdGuiPrm_usertext->logoEnable = pPrm_datetime->logoEnable;
+			pswosdGuiPrm_usertext->logoPos = pPrm_datetime->logoPos;
+			pswosdGuiPrm_usertext->textEnable = pPrm_datetime->textEnable;
+			pswosdGuiPrm_usertext->textPos = pPrm_datetime->textPos;
+			pswosdGuiPrm_usertext->detailedInfo = pPrm_datetime->detailedInfo;
+			pswosdGuiPrm_usertext->osd_bmp_num = pPrm_datetime->bmpNum;
+			pswosdGuiPrm_usertext->bmp = (TOSD_Char_sys *)pPrm_datetime->bmp;
+			if(pswosdGuiPrm_usertext->bmp == NULL){
+				OSA_ERROR("pswosdGuiPrm_usertext->bmp == NULL !\n");
 			}
-			Vsys_setSwOsdBmp(VSYS_OSD_LPRINFO_BMP, &pswosdGuiPrm_datetime);
-			pswosdGuiPrm_datetime =NULL;
+			switch(nFeature){
+				case STREAM_FEATURE_OSD_USERTEXT:
+					cmdID = VSYS_OSD_USERTEXT_BMP;
+					break;
+				case STREAM_FEATURE_OSD_USERTEXT_AUX:
+					cmdID = VSYS_OSD_AUX_USERTEXT_BMP;
+					break;
+				case STREAM_FEATURE_OSD_USERTEXT_LPRINFO:
+					cmdID = VSYS_OSD_LPRINFO_USERTEXT_BMP;
+					break;
+			}
+			Vsys_setSwOsdBmp(cmdID, &pswosdGuiPrm_usertext);
+			pswosdGuiPrm_usertext =NULL;
 			break;
         }
+
+
         case STREAM_FEATURE_OSDPRM1:
         {
             OSDPrm *pPrm = (OSDPrm *) pParm;
@@ -3752,19 +3877,22 @@ void stream_feature_setup(int nFeature, void *pParm)
 			
 			break;
 		}
-		case STREAM_FEATURE_SET_LPR_TRIGGER_AREA:
+		case STREAM_FEATURE_SET_LPR_TRIGGER_INFO:
 		{
-			AlgPolygonArea * pLprTrigArea = (AlgPolygonArea *) pParm;
-			lprDynPrm.trigArea.arr[0].x = pLprTrigArea->arr[0].x;
-			lprDynPrm.trigArea.arr[0].y = pLprTrigArea->arr[0].y;
-			lprDynPrm.trigArea.arr[1].x = pLprTrigArea->arr[1].x;
-			lprDynPrm.trigArea.arr[1].y = pLprTrigArea->arr[1].y;
-			lprDynPrm.trigArea.arr[2].x = pLprTrigArea->arr[2].x;
-			lprDynPrm.trigArea.arr[2].y = pLprTrigArea->arr[2].y;
-			lprDynPrm.trigArea.arr[3].x = pLprTrigArea->arr[3].x;
-			lprDynPrm.trigArea.arr[3].y = pLprTrigArea->arr[3].y;
+			AlgTriggerInfo * pLprTrigInfo = (AlgTriggerInfo *) pParm;
+			lprDynPrm.trigInfo.trigArea.arr[0].x = pLprTrigInfo->trigArea.arr[0].x;
+			lprDynPrm.trigInfo.trigArea.arr[0].y = pLprTrigInfo->trigArea.arr[0].y;
+			lprDynPrm.trigInfo.trigArea.arr[1].x = pLprTrigInfo->trigArea.arr[1].x;
+			lprDynPrm.trigInfo.trigArea.arr[1].y = pLprTrigInfo->trigArea.arr[1].y;
+			lprDynPrm.trigInfo.trigArea.arr[2].x = pLprTrigInfo->trigArea.arr[2].x;
+			lprDynPrm.trigInfo.trigArea.arr[2].y = pLprTrigInfo->trigArea.arr[2].y;
+			lprDynPrm.trigInfo.trigArea.arr[3].x = pLprTrigInfo->trigArea.arr[3].x;
+			lprDynPrm.trigInfo.trigArea.arr[3].y = pLprTrigInfo->trigArea.arr[3].y;
+			lprDynPrm.trigInfo.nTrigInterval = pLprTrigInfo->nTrigInterval;
+			lprDynPrm.trigInfo.nTrigMode = pLprTrigInfo->nTrigMode;
+			lprDynPrm.trigInfo.nVehicleDirection = pLprTrigInfo->nVehicleDirection;		
 			
-			Vsys_setLprDynPrm(VSYS_SET_LPR_TRIGGER_AREA, &lprDynPrm);
+			Vsys_setLprDynPrm(VSYS_SET_LPR_TRIGGER_INFO, &lprDynPrm);
 			
 			break;
 		}
@@ -3778,20 +3906,25 @@ void stream_feature_setup(int nFeature, void *pParm)
 		}
 		case STREAM_FEATURE_SET_LPR_DEFAULT_PROVINCE:
 		{
+			char *pLprDefaultProvince = (char *) pParm;
+			memcpy(&lprDynPrm.szProvince[0], pLprDefaultProvince, sizeof(lprDynPrm.szProvince));	
+			
+			Vsys_setLprDynPrm(VSYS_SET_LPR_DEFAULT_PROVINCE, &lprDynPrm);	
 			break;
 		}
 		case STREAM_FEATURE_SET_LPR_PLATE_TYPE:
 		{
 			break;
 		}
-		case STREAM_FEATURE_SET_LPR_PLATE_MAX_WIDTH:
+		case STREAM_FEATURE_SET_LPR_PLATE_WIDTH:
 		{
+			AlgPlateWidth * pLprPlateWidth = (AlgPlateWidth *) pParm;
+			lprDynPrm.plateWidth.nMax = pLprPlateWidth->nMax;
+			lprDynPrm.plateWidth.nMin = pLprPlateWidth->nMin;			
+			
+			Vsys_setLprDynPrm(VSYS_SET_LPR_PLATE_WIDTH, &lprDynPrm);			
 			break;
-		}
-		case STREAM_FEATURE_SET_LPR_PLATE_MIN_WIDTH:
-		{
-			break;
-		}		
+		}	
 		case STREAM_FEATURE_SET_LPR_MOVING_DIRECTION:
 		{
 			break;

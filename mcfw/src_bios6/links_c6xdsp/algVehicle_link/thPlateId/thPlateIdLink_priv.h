@@ -17,6 +17,13 @@ extern "C" {
 
 #include "thPlateIdAlg.h"
 
+#define ALGVEHICLE_LINK_SETCONFIG_BITMASK_RECOG_AREA				(1)
+#define ALGVEHICLE_LINK_SETCONFIG_BITMASK_TRIGG_INFO				(2)
+#define ALGVEHICLE_LINK_SETCONFIG_BITMASK_PLATE_WIDTH				(3)
+#define ALGVEHICLE_LINK_SETCONFIG_BITMASK_DEFAULT_PROVINCE			(4)
+#define ALGVEHICLE_LINK_SETCONFIG_BITMASK_RESET_VALUE				(0xFFFFFFFF)
+
+
 
 #define ALGVEHICLE_LINK_THPLATEID_MAX_OUT_FRAMES_PER_CH          (SYSTEM_LINK_FRAMES_PER_CH)
 
@@ -53,9 +60,12 @@ typedef struct
     void *pDspFrameBuf;
     /** Luma pointer to current frame */
 
-    int nMinPlateWidth;					// 检测的最小车牌宽度，以像素为单位
-    int nMaxPlateWidth;					// 检测的最大车牌宽度，以像素为单位		
-
+    AlgLprPlateWidth plateWidth;
+    char szProvince[16];	
+    int nTrigMode;			// 识别结果输出触发模式
+    int nTrigInterval;		// 相同车牌触发时间间隔	
+    int nVehicleDirection;		// 车辆通过方向	
+	
     unsigned char cImageFormat;
     unsigned char bVertFlip;
     unsigned char bDwordAligned;
@@ -67,7 +77,6 @@ typedef struct
     unsigned char bShadow;
     //unsigned char bIsAutoSlope;
     //unsigned char nSlopeDetectRange;
-    char szProvince[16];
     unsigned int dFormat;
     int pnMinFreeSRAM;
     int pnMinFreeSDRAM; 
@@ -76,6 +85,21 @@ typedef struct
     TH_RECT rcTrig;
 
 } AlgVehicleLink_ThPlateIdchPrm;
+
+typedef struct
+{
+	unsigned int chId;			// 通道ID
+	char szProvince[16];		// 默认省份	
+	int nTrigMode;			// 识别结果输出触发模式
+	int nTrigInterval;		// 相同车牌触发时间间隔	
+	int nPlateTypeSupt;			// 支持的车牌类型
+	AlgLprPlateWidth plateWidth;
+	int nVehicleDirection;		// 车辆通过方向
+	TH_RECT recogArea;			// 识别区域//
+	TH_RECT trigArea;			// 触发区域(虚拟线圈)
+	
+} AlgVehicleLink_ThPlateIdDynPrm;
+
 
 typedef struct {
     UInt32 inFrameRecvCount;
@@ -112,8 +136,8 @@ typedef struct AlgVehicleLink_ThPlateIdObj {
 
     AlgVehicleLink_ThPlateIdChObj   chObj[ALGVEHICLE_LINK_THPLATEID_MAX_CH];
 
-    //AlgVehicleLink_ThPlateIdDynParams thPlateIdDynParams;
-    UInt32 setConfigFlag;
+    AlgVehicleLink_ThPlateIdDynPrm thPlateIdDynParams[ALGVEHICLE_LINK_THPLATEID_MAX_CH];
+    UInt32 setConfigBitMask;
     UInt32 getConfigFlag;	
 
     void *algHndl;
@@ -125,6 +149,7 @@ typedef struct AlgVehicleLink_ThPlateIdObj {
 Int32 AlgVehicleLink_ThPlateIdalgCreate(AlgVehicleLink_ThPlateIdObj * pObj);
 Int32 AlgVehicleLink_ThPlateIdalgProcessData(AlgVehicleLink_ThPlateIdObj * pObj, FVID2_Frame *pFrame, Utils_BitBufHndl *bufOutQue);
 Int32 AlgVehicleLink_ThPlateIdalgDelete(AlgVehicleLink_ThPlateIdObj * pObj);
+Int32 AlgVehicleLink_ThPlateIdalgSetConfig(AlgVehicleLink_ThPlateIdObj * algObj);
 
 Int32 AlgVehicleLink_ThPlateIdInit (AlgVehicleLink_ThPlateIdObj *pThPlateIdAlgLinkObj);
 Int32 AlgVehicleLink_ThPlateIdDeInit (AlgVehicleLink_ThPlateIdObj *pThPlateIdAlgLinkObj);
@@ -137,6 +162,7 @@ Int32 AlgVehicleLink_ThPlateIdAlgSetContrast (AlgVehicleLink_ThPlateIdObj *pThPl
 Int32 AlgVehicleLink_ThPlateIdAlgSetEnableLeanCorrection (AlgVehicleLink_ThPlateIdObj *pThPlateIdAlgLinkObj);
 Int32 AlgVehicleLink_ThPlateIdAlgSetEnableShadow (AlgVehicleLink_ThPlateIdObj *pThPlateIdAlgLinkObj);
 Int32 AlgVehicleLink_ThPlateIdAlgSetRecogArea (AlgVehicleLink_ThPlateIdObj *pThPlateIdAlgLinkObj);
+Int32 AlgVehicleLink_ThPlateIdAlgSetPlateWidth (AlgVehicleLink_ThPlateIdObj *pThPlateIdAlgLinkObj);
 Int32 AlgVehicleLink_ThPlateIdprintStatistics (AlgVehicleLink_ThPlateIdObj *pObj, Bool resetAfterPrint);
 
 

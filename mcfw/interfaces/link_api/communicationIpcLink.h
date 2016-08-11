@@ -25,6 +25,11 @@ extern "C" {
 
 
 #include <mcfw/interfaces/link_api/system.h>
+#include <mcfw/interfaces/link_api/algVehicleLink.h>
+
+#define IPCCOMMUNICATION_CMD_CALLBACK			(0x8001)
+
+typedef Int32 (*HOST_CB_FUNC)(UInt32 timeStamp, DSP_LPR_RESULT *result);
 
 typedef struct
 {
